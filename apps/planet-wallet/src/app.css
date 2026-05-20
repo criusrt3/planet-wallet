@@ -1,0 +1,52 @@
+/* 星球钱包：在 imToken 设计系统上的轻科幻宇宙层 */
+body {
+  background-image: radial-gradient(
+      ellipse at 50% 0%,
+      rgba(44, 146, 250, 0.18),
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      rgb(8 14 37) 0%,
+      var(--background) 45%,
+      rgb(17 10 40) 100%
+    );
+}
+
+@keyframes orbit {
+  from {
+    transform: rotate(0deg) translateX(var(--orbit-r)) rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg) translateX(var(--orbit-r)) rotate(-360deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 24px rgba(44, 146, 250, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(167, 139, 250, 0.45);
+  }
+}
+
+.planet-core {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.4s ease-out forwards;
+}
