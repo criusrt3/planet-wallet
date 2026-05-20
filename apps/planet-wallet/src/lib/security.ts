@@ -3,7 +3,6 @@
  * 规则对齐 token-ui/security/SKILL.md（四档风险、签名前可读解释）
  */
 import type { RiskLevel, ShieldLevel, SignActionType, SignAnalysis } from '@/types'
-import { getDemoMessage } from './wallet'
 
 const SIGN_COPY: Record<
   SignActionType,
@@ -77,11 +76,7 @@ export function analyzeSignRequest(
 }
 
 export function getDemoSignAnalysis(): SignAnalysis {
-  const base = analyzeSignRequest('personal_sign')
-  return {
-    ...base,
-    detail: `${base.detail}\n\n待签名消息：「${getDemoMessage()}」`,
-  }
+  return analyzeSignRequest('personal_sign')
 }
 
 export const SHIELD_COPY: Record<
