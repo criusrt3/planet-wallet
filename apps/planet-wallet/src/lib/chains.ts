@@ -1,4 +1,6 @@
 /** Sepolia 测试网配置与常用测试代币 */
+import { getAddress } from 'viem'
+
 export const SEPOLIA_CHAIN_ID = 11155111
 
 export const SEPOLIA_EXPLORER = 'https://sepolia.etherscan.io'
@@ -41,7 +43,7 @@ export const SEPOLIA_TOKENS: SepoliaTokenDef[] = [
     id: 'usdc',
     symbol: 'USDC',
     name: 'USD Coin (Test)',
-    address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+    address: getAddress('0x1c7d4b196cb0c7b01d743fbc6116a902379c7238'),
     decimals: 6,
     color: '#2775CA',
   },
@@ -49,7 +51,7 @@ export const SEPOLIA_TOKENS: SepoliaTokenDef[] = [
     id: 'link',
     symbol: 'LINK',
     name: 'Chainlink (Test)',
-    address: '0x779877A7B0D9E8603169D6A94b85D27D985b2454',
+    address: getAddress('0x779877a7b0d9e8603169d6a94b85d27d985b2454'),
     decimals: 18,
     color: '#375BD2',
   },

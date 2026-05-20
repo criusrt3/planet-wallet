@@ -5,6 +5,7 @@
 import {
   encodeFunctionData,
   erc20Abi,
+  getAddress,
   maxUint256,
   parseUnits,
   type Address,
@@ -18,12 +19,14 @@ import {
 } from './evm'
 
 /** Sepolia Uniswap V3 SwapRouter02 */
-export const UNISWAP_SWAP_ROUTER =
-  '0x101F443B63170925bc522a621840Fa913eE734A2' as Address
+export const UNISWAP_SWAP_ROUTER = getAddress(
+  '0x101f443b63170925bc522a621840fa913ee734a2',
+)
 
 /** Sepolia WETH9 */
-export const SEPOLIA_WETH =
-  '0xfff9976782d46cc05630d1f6d57aB7c27c5f5Af3' as Address
+export const SEPOLIA_WETH = getAddress(
+  '0xfff9976782d46cc05630d1f6d57ab7c27c5f5af3',
+)
 
 const POOL_FEES = [3000, 500, 10000] as const
 
