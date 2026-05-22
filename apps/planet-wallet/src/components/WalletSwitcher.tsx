@@ -14,7 +14,12 @@ import {
   DropdownMenuTrigger,
 } from '@repo/ui/components/dropdown-menu'
 
-export function WalletSwitcher() {
+interface WalletSwitcherProps {
+  /** 顶栏右上角：更紧凑、菜单右对齐 */
+  variant?: 'inline' | 'header'
+}
+
+export function WalletSwitcher({ variant = 'inline' }: WalletSwitcherProps) {
   const {
     wallet,
     wallets,
@@ -25,61 +30,72 @@ export function WalletSwitcher() {
 
   if (!wallet) return null
 
+  const isHeader = variant === 'header'
+
   return (
-    <div className="flex items-center gap-2">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-1 max-w-[200px]">
-            <Users className="h-4 w-4 shrink-0" />
-            <span className="truncate">{wallet.nickname}</span>
-            <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-64">
-          <DropdownMenuLabel>
-            身份钱包 · {wallets.length}/{MAX_WALLETS}
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {wallets.map((w) => (
-            <DropdownMenuItem
-              key={w.id}
-              onClick={() => switchWallet(w.id)}
-              className="flex flex-col items-start gap-0.5"
-            >
-              <span className="font-medium">
-                {w.nickname}
-                {w.id === activeWalletId ? (
-                  <Badge variant="primary" className="ml-2 text-[10px]">
-                    当前
-                  </Badge>
-                ) : null}
-              </span>
-              {w.note ? (
-                <span className="text-[10px] text-muted-foreground line-clamp-1">
-                  {w.note}
-                </span>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant={isHeader ? 'secondary' : 'outline'}
+          size="sm"
+          className={
+            isHeader
+              ? 'app-header-wallet-trigger h-9 max-w-[11rem] gap-1.5 px-2.5'
+              : 'gap-1 max-w-[200px]'
+          }
+        >
+          <Users className="h-4 w-4 shrink-0 text-primary" />
+          <span className="truncate font-medium">{wallet.nickname}</span>
+          <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align={isHeader ? 'end' : 'start'}
+        className="w-64"
+      >
+        <DropdownMenuLabel>
+          切换身份 · {wallets.length}/{MAX_WALLETS}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {wallets.map((w) => (
+          <DropdownMenuItem
+            key={w.id}
+            onClick={() => switchWallet(w.id)}
+            className="flex flex-col items-start gap-0.5"
+          >
+            <span className="font-medium">
+              {w.nickname}
+              {w.id === activeWalletId ? (
+                <Badge variant="primary" className="ml-2 text-[10px]">
+                  当前
+                </Badge>
               ) : null}
-              <span className="font-mono text-[10px] text-muted-foreground">
-                {shortenAddress(w.address, 6)}
+            </span>
+            {w.note ? (
+              <span className="text-[10px] text-muted-foreground line-clamp-1">
+                {w.note}
               </span>
-            </DropdownMenuItem>
-          ))}
-          <DropdownMenuSeparator />
-          {canCreateWallet ? (
-            <DropdownMenuItem asChild>
-              <Link to="/create" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                创建新身份
-              </Link>
-            </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem disabled>已达 {MAX_WALLETS} 个上限</DropdownMenuItem>
-          )}
-          <DropdownMenuItem asChild>
-            <Link to="/wallets">管理全部身份</Link>
+            ) : null}
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {shortenAddress(w.address, 6)}
+            </span>
           </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+        ))}
+        <DropdownMenuSeparator />
+        {canCreateWallet ? (
+          <DropdownMenuItem asChild>
+            <Link to="/create" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              创建新身份
+            </Link>
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem disabled>已达 {MAX_WALLETS} 个上限</DropdownMenuItem>
+        )}
+        <DropdownMenuItem asChild>
+          <Link to="/wallets">管理全部身份</Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

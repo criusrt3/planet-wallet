@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Globe, Home, Send, Settings, Shield } from 'lucide-react'
+import { WalletSwitcher } from '@/components/WalletSwitcher'
 import { useWallet } from '@/store/WalletContext'
 import { Badge } from '@repo/ui/components/badge'
 
@@ -25,9 +26,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </h1>
           <p className="app-meta mt-1">imToken 10 周年 · Sepolia 测试网</p>
         </div>
-        <Badge variant="secondary" className="app-header-badge shrink-0">
-          {hasWallet ? `${wallets.length} 身份` : '未创建'}
-        </Badge>
+        <div className="shrink-0">
+          {hasWallet ? (
+            <WalletSwitcher variant="header" />
+          ) : (
+            <Badge variant="secondary" className="app-header-badge">
+              未创建
+            </Badge>
+          )}
+        </div>
       </header>
       <main className="flex-1">{children}</main>
       <nav className="app-bottom-nav fixed bottom-0 left-0 right-0 z-50 border-t">

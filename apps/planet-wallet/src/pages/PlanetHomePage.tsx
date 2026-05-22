@@ -11,7 +11,6 @@ import {
 } from 'lucide-react'
 import { PlanetVisualization } from '@/components/PlanetVisualization'
 import { WalletPageLockScreen } from '@/components/WalletPageLockScreen'
-import { WalletSwitcher } from '@/components/WalletSwitcher'
 import {
   explorerAddressUrl,
   FAUCET_LINKS,
@@ -98,9 +97,8 @@ export function PlanetHomePage() {
 
   return (
     <div className="space-y-5 animate-fade-up">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <WalletSwitcher />
-        <div className="flex flex-wrap gap-2">
+      {enabledChainIds.length > 0 && (
+        <div className="flex flex-wrap justify-end gap-2">
           {enabledChainIds.map((id) => {
             const c = getChainById(id)
             return (
@@ -110,13 +108,20 @@ export function PlanetHomePage() {
             )
           })}
         </div>
-      </div>
+      )}
 
-      <PlanetVisualization />
-      <div className="text-center">
-        <p className="app-page-title">{wallet.nickname}</p>
+      <PlanetVisualization
+        interactive
+        title={wallet.nickname}
+        subtitle={
+          ethBalance
+            ? `${ethBalance.formatted} ${ethBalance.symbol} · Sepolia`
+            : 'Sepolia 测试网'
+        }
+      />
+      <div className="text-center -mt-1">
         {wallet.note ? (
-          <p className="text-xs text-muted-foreground mt-0.5 max-w-xs mx-auto">
+          <p className="text-xs text-muted-foreground max-w-xs mx-auto">
             {wallet.note}
           </p>
         ) : null}
