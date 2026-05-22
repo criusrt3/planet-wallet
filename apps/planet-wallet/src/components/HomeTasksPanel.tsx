@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { taskPath } from '@/lib/task-path'
 import { AiNavigator } from '@/components/AiNavigator'
 import { ShieldBadge } from '@/components/ShieldBadge'
-import { ShieldLevelGuide } from '@/components/ShieldLevelGuide'
 import { ShieldStatusBar } from '@/components/ShieldStatusBar'
 import { TaskList } from '@/components/TaskList'
 import { allTasksDone, countCompleted, TOTAL_TASKS } from '@/lib/tasks'
@@ -37,7 +36,7 @@ export function HomeTasksPanel() {
     !completedTasks.includes('security_passport')
 
   return (
-    <div className="space-y-4 animate-fade-up">
+    <div className="space-y-5 animate-fade-up">
       <div>
         <h2 className="text-title-sm font-bold">新手任务</h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -46,7 +45,6 @@ export function HomeTasksPanel() {
       </div>
 
       <ShieldBadge level={shieldLevel} />
-      <ShieldLevelGuide currentLevel={shieldLevel} compact />
       <ShieldStatusBar pulse={shieldPulse} />
       <AiNavigator message={navigatorText} compact />
 

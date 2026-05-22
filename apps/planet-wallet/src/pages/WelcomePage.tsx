@@ -18,7 +18,7 @@ export function WelcomePage() {
   }
 
   return (
-    <div className="animate-fade-up space-y-6">
+    <div className="animate-fade-up space-y-7">
       <PlanetVisualization pulse />
       <AiNavigator message={msg.text} />
       <Card>

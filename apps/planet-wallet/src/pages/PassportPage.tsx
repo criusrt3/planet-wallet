@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Download, ImageIcon, Loader2, Share2 } from 'lucide-react'
 import { AiNavigator } from '@/components/AiNavigator'
 import { ShieldBadge } from '@/components/ShieldBadge'
-import { ShieldLevelGuide } from '@/components/ShieldLevelGuide'
 import { TaskPassportQuizSheet } from '@/components/task-sheets/TaskPassportQuizSheet'
 import { getNavigatorMessage } from '@/lib/ai-navigator'
 import {
@@ -140,14 +139,14 @@ export function PassportPage() {
     <div className="space-y-4 animate-fade-up">
       <AiNavigator message={getNavigatorMessage('passport').text} compact />
       <div ref={passportCardRef} id="passport-card" className="rounded-xl">
-      <Card className="overflow-hidden border-2 border-primary/30 bg-gradient-to-br from-brand-deep/90 via-ai-subtle-bg/30 to-surface-blue/40">
+      <Card className="passport-anniversary-bg overflow-hidden border-2 border-primary/40 shadow-[var(--shadow-card-md)]">
         <CardContent className="p-6 relative">
           <span className="absolute right-4 top-4 text-4xl opacity-30">🪐</span>
-          <p className="text-xs tracking-widest text-ai-text uppercase">
+          <p className="text-xs tracking-widest text-brand-secondary uppercase">
             imToken 10 周年 · 链上护照
           </p>
-          <h2 className="mt-2 text-title-md font-bold">{wallet.nickname}</h2>
-          <p className="font-mono text-sm text-primary mt-1">
+          <h2 className="app-page-title mt-2 text-title-md">{wallet.nickname}</h2>
+          <p className="app-mono text-primary mt-1.5">
             {shortenAddress(wallet.address, 8)}
           </p>
           <dl className="mt-6 grid grid-cols-2 gap-3 text-xs">
@@ -168,7 +167,7 @@ export function PassportPage() {
               </dd>
             </div>
           </dl>
-          <blockquote className="mt-6 border-l-2 border-ai-primary pl-3 text-sm italic whitespace-pre-line">
+          <blockquote className="mt-6 border-l-2 border-brand-secondary pl-3 text-sm italic whitespace-pre-line">
             {manifesto}
           </blockquote>
           <p className="mt-4 text-[10px] text-muted-foreground">
@@ -178,7 +177,6 @@ export function PassportPage() {
       </Card>
       </div>
       <ShieldBadge level={shieldLevel} />
-      <ShieldLevelGuide currentLevel={shieldLevel} />
 
       <Button
         className="w-full"

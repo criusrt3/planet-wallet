@@ -58,6 +58,10 @@ export interface AddressBookEntry {
 export interface AppSettings {
   /** 操作时显示 AI 学习与风险解释 */
   showLearningHints: boolean
+  /** 进入钱包页（/planet）前需输入密码 */
+  walletLockEnabled: boolean
+  /** SHA-256 十六进制，仅存本机 */
+  walletLockHash: string | null
 }
 
 export interface TokenBalanceView {

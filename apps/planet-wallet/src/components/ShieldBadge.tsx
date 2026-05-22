@@ -1,4 +1,5 @@
 import { Shield } from 'lucide-react'
+import { ShieldLevelHint } from '@/components/ShieldLevelGuide'
 import { SHIELD_COPY } from '@/lib/security'
 import type { ShieldLevel } from '@/types'
 import { Card, CardContent } from '@repo/ui/components/card'
@@ -17,11 +18,14 @@ export function ShieldBadge({ level }: { level: ShieldLevel }) {
   return (
     <Card className={`ring-2 ${ring}`}>
       <CardContent className="flex items-center gap-3 p-4">
-        <Shield className={`h-8 w-8 ${info.color}`} />
-        <div>
-          <p className={`text-sm font-semibold ${info.color}`}>
-            Lv.{info.rank} · {info.label}
-          </p>
+        <Shield className={`h-8 w-8 shrink-0 ${info.color}`} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <p className={`text-body-md font-medium tracking-snug ${info.color}`}>
+              Lv.{info.rank} · {info.label}
+            </p>
+            <ShieldLevelHint currentLevel={level} />
+          </div>
           <p className="text-xs text-muted-foreground mt-0.5">
             {info.description}
           </p>

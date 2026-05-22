@@ -1,18 +1,237 @@
-/* 星球钱包：在 imToken 设计系统上的轻科幻宇宙层 */
+/**
+ * 星球钱包 · imToken 10 周年视觉层
+ * 色彩：@repo/ui `.dark` · 排版：细腻字重 + 统一间距与 elevation
+ */
+
+html.dark {
+  --anniversary-teal: 13 148 136;
+  --anniversary-teal-glow: 20 184 166;
+  --imtoken-navy-deep: 8 14 37;
+  --imtoken-navy-mid: 12 22 55;
+  --imtoken-navy-card: 15 26 67;
+
+  /* 排版微调 */
+  --app-tracking-body: 0.012em;
+  --app-tracking-caption: 0.06em;
+  --app-tracking-label: 0.08em;
+  --app-leading-body: 1.62;
+  --app-leading-tight: 1.35;
+  --app-section-gap: 1.25rem;
+  --shadow-elevated:
+    0 1px 0 color-mix(in srgb, rgb(255 255 255) 5%, transparent) inset,
+    0 8px 32px -8px color-mix(in srgb, var(--primary) 14%, transparent),
+    0 2px 8px -2px rgba(0, 0, 0, 0.35);
+}
+
+/* ── 应用壳：中文优先、抗锯齿、略疏字距 ── */
+.app-shell {
+  font-family: var(--font-chinese);
+  font-weight: 400;
+  letter-spacing: var(--app-tracking-body);
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app-shell main {
+  line-height: var(--app-leading-body);
+}
+
+/* 页面主标题（替代过粗的 font-bold） */
+.app-page-title {
+  font-size: var(--text-title-sm);
+  line-height: var(--text-title-sm--line-height);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.app-page-title.text-title-md {
+  font-size: var(--text-title-md);
+  line-height: var(--text-title-md--line-height);
+}
+
+.app-shell .text-title-sm.font-bold,
+.app-shell .text-title-md.font-bold {
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+/* 辅助说明：略大字号 + 疏字距，避免 10px 发糊 */
+.app-meta {
+  font-size: var(--text-caption);
+  line-height: 1.55;
+  font-weight: 400;
+  letter-spacing: var(--app-tracking-caption);
+  color: color-mix(in srgb, var(--muted-foreground) 88%, transparent);
+}
+
+.app-shell .text-\[10px\]:not(.font-mono) {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: var(--app-tracking-label);
+}
+
+.app-label-caps {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: var(--app-tracking-label);
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--muted-foreground) 85%, transparent);
+}
+
+.app-mono {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 背景 ── */
 body {
-  background-image: radial-gradient(
-      ellipse at 50% 0%,
-      rgba(44, 146, 250, 0.18),
-      transparent 55%
+  background-color: var(--background);
+  background-image:
+    radial-gradient(
+      ellipse 110% 70% at 50% -15%,
+      color-mix(in srgb, var(--primary) 22%, transparent),
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse 70% 55% at 95% 35%,
+      color-mix(in srgb, var(--brand-secondary) 14%, transparent),
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse 65% 50% at 5% 85%,
+      color-mix(in srgb, rgb(var(--anniversary-teal)) 10%, transparent),
+      transparent 45%
     ),
     linear-gradient(
       180deg,
-      rgb(8 14 37) 0%,
-      var(--background) 45%,
-      rgb(17 10 40) 100%
+      rgb(var(--imtoken-navy-deep)) 0%,
+      var(--background) 42%,
+      rgb(var(--imtoken-navy-card)) 100%
     );
 }
 
+.app-brand-title {
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: var(--app-leading-tight);
+}
+
+.app-brand-title.identity-gradient {
+  font-weight: 600;
+}
+
+/* ── 卡片与列表：统一圆角、轻 elevation ── */
+.app-shell [data-slot="card"] {
+  border-radius: var(--radius-lg);
+  border-color: color-mix(in srgb, var(--border) 62%, transparent);
+  box-shadow: var(--shadow-elevated);
+}
+
+.app-shell [data-slot="card-title"] {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.app-shell [data-slot="checklist-card"] {
+  border-radius: var(--radius-md);
+  border-color: color-mix(in srgb, var(--border) 58%, transparent);
+  padding: 1rem 1.125rem;
+  transition:
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.app-shell [data-slot="checklist-card"] > div:first-child {
+  font-size: var(--text-body-md);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: var(--text-body-md--line-height);
+}
+
+.app-shell [data-slot="checklist-card"] > div:nth-child(2) {
+  margin-top: 0.375rem;
+  font-size: var(--text-body-sm);
+  line-height: var(--app-leading-body);
+  letter-spacing: 0.01em;
+}
+
+.app-shell [data-slot="checklist-card"]:hover {
+  border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.app-shell [data-slot="chat-bubble"] {
+  font-size: var(--text-body-md);
+  line-height: var(--app-leading-body);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  border-radius: 1.125rem;
+  border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  background: color-mix(in srgb, var(--card) 88%, var(--surface-blue) 12%);
+}
+
+.glass-card {
+  background: color-mix(in srgb, var(--card) 86%, transparent);
+  backdrop-filter: blur(20px);
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevated);
+}
+
+.passport-anniversary-bg {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, rgb(17 29 74) 92%, transparent) 0%,
+    color-mix(in srgb, var(--surface-blue) 55%, transparent) 38%,
+    color-mix(in srgb, rgb(var(--anniversary-teal)) 18%, transparent) 100%
+  );
+}
+
+/* ── 顶栏与底栏 ── */
+.app-header-badge {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border-color: color-mix(in srgb, var(--border) 75%, transparent);
+  background: color-mix(in srgb, var(--card) 70%, transparent);
+}
+
+.app-bottom-nav {
+  border-top-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+  background: color-mix(in srgb, var(--background) 96%, transparent);
+  backdrop-filter: blur(24px) saturate(1.15);
+}
+
+.app-nav-link {
+  min-width: 3.5rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--radius-lg);
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.app-nav-link--active {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 11%, transparent);
+}
+
+.app-nav-link:not(.app-nav-link--active):hover {
+  color: color-mix(in srgb, var(--foreground) 75%, var(--muted-foreground));
+}
+
+.app-nav-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+/* ── 星球动效 ── */
 @keyframes orbit {
   from {
     transform: rotate(0deg) translateX(var(--orbit-r)) rotate(0deg);
@@ -25,21 +244,52 @@ body {
 @keyframes pulse-glow {
   0%,
   100% {
-    box-shadow: 0 0 24px rgba(44, 146, 250, 0.35);
+    box-shadow:
+      0 0 18px color-mix(in srgb, var(--primary) 38%, transparent),
+      0 0 28px color-mix(in srgb, var(--brand-secondary) 18%, transparent);
   }
   50% {
-    box-shadow: 0 0 40px rgba(167, 139, 250, 0.45);
+    box-shadow:
+      0 0 28px color-mix(in srgb, var(--primary) 48%, transparent),
+      0 0 40px color-mix(in srgb, rgb(var(--anniversary-teal)) 28%, transparent);
   }
 }
 
 .planet-core {
-  animation: pulse-glow 3s ease-in-out infinite;
+  animation: pulse-glow 3.2s ease-in-out infinite;
+}
+
+.planet-core-pulse {
+  animation: pulse-glow 1.2s ease-in-out infinite;
+}
+
+.planet-scene-glow {
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--primary) 42%, transparent) 0%,
+    transparent 72%
+  );
+}
+
+.planet-core-surface {
+  background: radial-gradient(
+    circle at 32% 28%,
+    var(--brand-secondary) 0%,
+    var(--primary) 42%,
+    var(--primary-active) 100%
+  );
+}
+
+.planet-satellite {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
 }
 
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -48,5 +298,5 @@ body {
 }
 
 .animate-fade-up {
-  animation: fadeUp 0.4s ease-out forwards;
+  animation: fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }

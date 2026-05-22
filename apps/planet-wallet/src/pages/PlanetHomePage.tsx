@@ -10,6 +10,7 @@ import {
   Shield,
 } from 'lucide-react'
 import { PlanetVisualization } from '@/components/PlanetVisualization'
+import { WalletPageLockScreen } from '@/components/WalletPageLockScreen'
 import { WalletSwitcher } from '@/components/WalletSwitcher'
 import {
   explorerAddressUrl,
@@ -52,8 +53,16 @@ function groupByChain(balances: TokenBalanceView[]) {
 
 export function PlanetHomePage() {
   const navigate = useNavigate()
-  const { wallet, balances, balancesLoading, refreshBalances, markAddressCopied } =
-    useWallet()
+  const {
+    wallet,
+    balances,
+    balancesLoading,
+    refreshBalances,
+    markAddressCopied,
+    settings,
+    isWalletPageUnlocked,
+    lockWalletPage,
+  } = useWallet()
   const [copied, setCopied] = useState(false)
 
   const chainGroups = useMemo(() => groupByChain(balances), [balances])
@@ -63,7 +72,18 @@ export function PlanetHomePage() {
     if (!wallet) navigate('/create')
   }, [wallet, navigate])
 
+  useEffect(() => {
+    if (settings.walletLockEnabled) lockWalletPage()
+    return () => {
+      if (settings.walletLockEnabled) lockWalletPage()
+    }
+  }, [settings.walletLockEnabled, lockWalletPage])
+
   if (!wallet) return null
+
+  if (settings.walletLockEnabled && !isWalletPageUnlocked) {
+    return <WalletPageLockScreen />
+  }
 
   async function handleCopy() {
     await navigator.clipboard.writeText(wallet!.address)
@@ -77,7 +97,7 @@ export function PlanetHomePage() {
   )
 
   return (
-    <div className="space-y-4 animate-fade-up">
+    <div className="space-y-5 animate-fade-up">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <WalletSwitcher />
         <div className="flex flex-wrap gap-2">
@@ -94,7 +114,7 @@ export function PlanetHomePage() {
 
       <PlanetVisualization />
       <div className="text-center">
-        <p className="text-title-sm font-bold">{wallet.nickname}</p>
+        <p className="app-page-title">{wallet.nickname}</p>
         {wallet.note ? (
           <p className="text-xs text-muted-foreground mt-0.5 max-w-xs mx-auto">
             {wallet.note}
@@ -103,7 +123,7 @@ export function PlanetHomePage() {
         <button
           type="button"
           onClick={() => handleCopy()}
-          className="mt-1 inline-flex items-center gap-1 font-mono text-sm text-primary hover:underline"
+          className="app-mono mt-1.5 inline-flex items-center gap-1 text-primary hover:underline"
           title={wallet.address}
         >
           {shortenAddress(wallet.address, 10)}

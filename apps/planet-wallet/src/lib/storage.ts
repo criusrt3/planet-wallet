@@ -1,6 +1,14 @@
 import { DEFAULT_ENABLED_CHAIN_IDS } from '@/lib/chains'
 import { normalizeCompletedTasks } from '@/lib/tasks'
-import type { AppState, TaskId, WalletIdentity } from '@/types'
+import type { AppSettings, AppState, TaskId, WalletIdentity } from '@/types'
+
+export function normalizeSettings(raw?: Partial<AppSettings>): AppSettings {
+  return {
+    showLearningHints: raw?.showLearningHints ?? true,
+    walletLockEnabled: raw?.walletLockEnabled ?? false,
+    walletLockHash: raw?.walletLockHash ?? null,
+  }
+}
 
 export const STORAGE_KEY = 'planet-wallet-state-v7'
 export const MAX_WALLETS = 10
@@ -10,7 +18,11 @@ export const defaultState: AppState = {
   activeWalletId: null,
   addressBook: [],
   txHistory: [],
-  settings: { showLearningHints: true },
+  settings: {
+    showLearningHints: true,
+    walletLockEnabled: false,
+    walletLockHash: null,
+  },
   completedTasks: [],
   shieldLevel: 'initial',
   shieldPulse: null,
@@ -48,11 +60,9 @@ function migrateFromLegacy(parsed: Record<string, unknown>): AppState | null {
     shieldPulse: (parsed.shieldPulse as AppState['shieldPulse']) ?? null,
     demoSignature: (parsed.demoSignature as string | null) ?? null,
     quizPassed: Boolean(parsed.quizPassed),
-    settings: {
-      showLearningHints:
-        (parsed.settings as AppState['settings'] | undefined)
-          ?.showLearningHints ?? true,
-    },
+    settings: normalizeSettings(
+      parsed.settings as Partial<AppSettings> | undefined,
+    ),
     addressBook:
       (parsed.addressBook as AppState['addressBook']) ?? [],
   }
@@ -79,6 +89,7 @@ function parseStoredState(parsed: Record<string, unknown>): AppState | null {
         ? w.enabledChainIds
         : [...DEFAULT_ENABLED_CHAIN_IDS],
   }))
+  state.settings = normalizeSettings(state.settings)
   return state
 }
 

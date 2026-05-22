@@ -21,15 +21,15 @@ export function TaskList({ completed }: { completed: TaskId[] }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {TIER_ORDER.map((tier) => {
         const ids = TASK_ORDER.filter((id) => TASK_TIER[id] === tier)
         return (
-          <div key={tier}>
-            <p className="text-[10px] font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+          <div key={tier} className="flex flex-col gap-3">
+            <p className="app-label-caps">
               {TASK_TIER_LABEL[tier]}
             </p>
-            <ul className="space-y-2">
+            <ul className="flex flex-col gap-2.5">
               {ids.map((id) => {
                 const done = completed.includes(id)
                 const meta = TASK_META[id]

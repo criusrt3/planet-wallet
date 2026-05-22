@@ -43,6 +43,11 @@ import {
   saveState,
   STORAGE_KEY,
 } from '@/lib/storage'
+import {
+  hashWalletLockPassword,
+  validateWalletLockPassword,
+  verifyWalletLockPassword,
+} from '@/lib/wallet-lock'
 import { clearTcxSession } from '@/lib/tcx-wallet'
 import {
   createPlanetWallet,
@@ -96,6 +101,16 @@ interface WalletContextValue extends AppState {
   addAddressBookEntry: (entry: Omit<AddressBookEntry, 'id' | 'createdAt'>) => void
   removeAddressBookEntry: (id: string) => Promise<void>
   setShowLearningHints: (value: boolean) => void
+  /** 钱包页已解锁（未开启锁时恒为 true） */
+  isWalletPageUnlocked: boolean
+  unlockWalletPage: (password: string) => Promise<boolean>
+  lockWalletPage: () => void
+  enableWalletPageLock: (password: string) => Promise<boolean>
+  disableWalletPageLock: (currentPassword: string) => Promise<boolean>
+  changeWalletPageLockPassword: (
+    currentPassword: string,
+    newPassword: string,
+  ) => Promise<boolean>
   submitQuiz: (answers: number[]) => boolean
   resetDemo: () => Promise<void>
   manifesto: string
@@ -171,6 +186,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [balances, setBalances] = useState<TokenBalanceView[]>([])
   const [balancesLoading, setBalancesLoading] = useState(false)
   const [lastTxHash, setLastTxHash] = useState<string | null>(null)
+  const [walletPageUnlocked, setWalletPageUnlocked] = useState(false)
 
   const wallet = useMemo(() => getActiveWallet(state), [state])
 
@@ -565,6 +581,86 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [persist],
   )
 
+  const isWalletPageUnlocked =
+    !state.settings.walletLockEnabled || walletPageUnlocked
+
+  const lockWalletPage = useCallback(() => {
+    setWalletPageUnlocked(false)
+  }, [])
+
+  const unlockWalletPage = useCallback(
+    async (password: string) => {
+      const hash = state.settings.walletLockHash
+      if (!hash || !state.settings.walletLockEnabled) {
+        setWalletPageUnlocked(true)
+        return true
+      }
+      const ok = await verifyWalletLockPassword(password, hash)
+      if (ok) setWalletPageUnlocked(true)
+      return ok
+    },
+    [state.settings.walletLockHash, state.settings.walletLockEnabled],
+  )
+
+  const enableWalletPageLock = useCallback(
+    async (password: string) => {
+      const err = validateWalletLockPassword(password)
+      if (err) return false
+      const hash = await hashWalletLockPassword(password)
+      persist((prev) => ({
+        ...prev,
+        settings: {
+          ...prev.settings,
+          walletLockEnabled: true,
+          walletLockHash: hash,
+        },
+      }))
+      setWalletPageUnlocked(false)
+      return true
+    },
+    [persist],
+  )
+
+  const disableWalletPageLock = useCallback(
+    async (currentPassword: string) => {
+      const hash = state.settings.walletLockHash
+      if (hash) {
+        const ok = await verifyWalletLockPassword(currentPassword, hash)
+        if (!ok) return false
+      }
+      persist((prev) => ({
+        ...prev,
+        settings: {
+          ...prev.settings,
+          walletLockEnabled: false,
+          walletLockHash: null,
+        },
+      }))
+      setWalletPageUnlocked(true)
+      return true
+    },
+    [persist, state.settings.walletLockHash],
+  )
+
+  const changeWalletPageLockPassword = useCallback(
+    async (currentPassword: string, newPassword: string) => {
+      const err = validateWalletLockPassword(newPassword)
+      if (err) return false
+      const hash = state.settings.walletLockHash
+      if (!hash) return false
+      const ok = await verifyWalletLockPassword(currentPassword, hash)
+      if (!ok) return false
+      const nextHash = await hashWalletLockPassword(newPassword)
+      persist((prev) => ({
+        ...prev,
+        settings: { ...prev.settings, walletLockHash: nextHash },
+      }))
+      setWalletPageUnlocked(false)
+      return true
+    },
+    [persist, state.settings.walletLockHash],
+  )
+
   const submitQuiz = useCallback(
     (answers: number[]) => {
       const allCorrect = QUIZ_QUESTIONS.every(
@@ -595,6 +691,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setState({ ...defaultState })
     setBalances([])
     setLastTxHash(null)
+    setWalletPageUnlocked(false)
   }, [])
 
   const navigatorText = useMemo(() => {
@@ -642,6 +739,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     addAddressBookEntry,
     removeAddressBookEntry,
     setShowLearningHints,
+    isWalletPageUnlocked,
+    unlockWalletPage,
+    lockWalletPage,
+    enableWalletPageLock,
+    disableWalletPageLock,
+    changeWalletPageLockPassword,
     submitQuiz,
     emitShieldPulse,
     warnScreenshotAttempt,
