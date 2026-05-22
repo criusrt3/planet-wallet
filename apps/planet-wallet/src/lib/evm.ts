@@ -147,6 +147,60 @@ export async function fetchTokenBalances(
   return fetchMultiChainBalances(address, ['sepolia'])
 }
 
+/** 将 viem / RPC / Token Core 错误转为用户可读文案 */
+export function formatEvmError(error: unknown): string {
+  if (error instanceof Error && error.message === 'USER_CANCELLED') {
+    return '已取消操作'
+  }
+  const msg =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'object' &&
+          error !== null &&
+          'shortMessage' in error
+        ? String((error as { shortMessage: string }).shortMessage)
+        : String(error)
+
+  if (/exceeds the balance|insufficient funds|insufficient balance/i.test(msg)) {
+    return '余额不足：请确认 Sepolia 测试 ETH 足够支付 Gas（转账还需覆盖转出金额）。可从首页「领取测试币」链接获取。'
+  }
+  if (/invalid address|checksum/i.test(msg)) {
+    return '地址格式无效，请检查收款地址是否为正确的 0x 开头 42 位地址'
+  }
+  if (/Token Core|签名失败|签名结果无效/i.test(msg)) {
+    return msg
+  }
+  if (/nonce too low|replacement transaction/i.test(msg)) {
+    return '交易 nonce 冲突，请等待上一笔确认后重试'
+  }
+  if (/reverted|execution reverted/i.test(msg)) {
+    return `链上执行失败：${msg.length > 160 ? `${msg.slice(0, 160)}…` : msg}`
+  }
+  if (/fetch failed|timeout|network/i.test(msg)) {
+    return '无法连接 Sepolia RPC，请检查网络或稍后重试'
+  }
+  return msg
+}
+
+/** Sepolia 上至少需少量 ETH 支付 Gas */
+const MIN_SEPOLIA_GAS_WEI = 30_000_000_000_000n // ~0.00003 ETH
+
+export async function assertSepoliaGasBalance(
+  from: Address,
+  extraValueWei = 0n,
+): Promise<void> {
+  const client = getPublicClientForChain('sepolia')
+  const balance = await client.getBalance({ address: from })
+  const need = MIN_SEPOLIA_GAS_WEI + extraValueWei
+  if (balance < need) {
+    throw new Error(
+      balance === 0n
+        ? 'Sepolia ETH 余额为 0，无法支付 Gas。请从首页水龙头领取测试 ETH 后再试。'
+        : 'Sepolia ETH 过少，可能无法支付 Gas。请领取更多测试 ETH 或减少转账金额。',
+    )
+  }
+}
+
 export function normalizeSignedTxHex(signature: string): Hex {
   const trimmed = signature.trim()
   const body = trimmed.startsWith('0x') ? trimmed.slice(2) : trimmed
@@ -167,54 +221,61 @@ export async function broadcastRawTransaction(
 export async function signAndBroadcast(
   params: SignBroadcastParams,
 ): Promise<SignBroadcastResult> {
-  const evmChainId = params.chainId ?? SEPOLIA_CHAIN_ID
-  const explorerBase =
-    params.explorerBase ??
-    getChainById('sepolia')!.explorer
-  const client = getPublicClientForChain(
-    SUPPORTED_CHAINS.find((c) => c.chainId === evmChainId)?.id ?? 'sepolia',
-  )
-  const value = params.value ?? 0n
-  const data = params.data ?? '0x'
-  const nonce = await client.getTransactionCount({ address: params.from })
-  const fees = await client.estimateFeesPerGas()
-  const gas = await client.estimateGas({
-    account: params.from,
-    to: params.to,
-    data,
-    value,
-  })
+  try {
+    const evmChainId = params.chainId ?? SEPOLIA_CHAIN_ID
+    const chainKey =
+      SUPPORTED_CHAINS.find((c) => c.chainId === evmChainId)?.id ?? 'sepolia'
+    const explorerBase =
+      params.explorerBase ?? getChainById(chainKey)!.explorer
+    const client = getPublicClientForChain(chainKey)
+    const value = params.value ?? 0n
+    const data = params.data ?? '0x'
 
-  const signed = await signEthTransaction(
-    params.keystoreJson,
-    params.walletPassword,
-    {
-      nonce: nonce.toString(),
-      gasPrice: '',
-      gasLimit: gas.toString(),
+    if (chainKey === 'sepolia') {
+      await assertSepoliaGasBalance(params.from, value)
+    }
+
+    const nonce = await client.getTransactionCount({ address: params.from })
+    const fees = await client.estimateFeesPerGas()
+    const gas = await client.estimateGas({
+      account: params.from,
       to: params.to,
-      value: value.toString(),
       data,
-      chainId: String(evmChainId),
-      txType: '02',
-      maxFeePerGas: (fees.maxFeePerGas ?? 30_000_000_000n).toString(),
-      maxPriorityFeePerGas: (fees.maxPriorityFeePerGas ?? 1_000_000_000n).toString(),
-      accessList: [],
-    },
-  )
+      value,
+    })
 
-  const raw = normalizeSignedTxHex(signed.signature)
-  const hash = await broadcastRawTransaction(
-    raw,
-    SUPPORTED_CHAINS.find((c) => c.chainId === evmChainId)?.id ?? 'sepolia',
-  )
-  const txHash = signed.txHash?.startsWith('0x')
-    ? (signed.txHash as Hex)
-    : hash
+    const signed = await signEthTransaction(
+      params.keystoreJson,
+      params.walletPassword,
+      {
+        nonce: nonce.toString(),
+        gasPrice: '',
+        gasLimit: gas.toString(),
+        to: params.to,
+        value: value.toString(),
+        data,
+        chainId: String(evmChainId),
+        txType: '02',
+        maxFeePerGas: (fees.maxFeePerGas ?? 30_000_000_000n).toString(),
+        maxPriorityFeePerGas: (
+          fees.maxPriorityFeePerGas ?? 1_000_000_000n
+        ).toString(),
+        accessList: [],
+      },
+    )
 
-  return {
-    hash: txHash,
-    explorerUrl: `${explorerBase}/tx/${txHash}`,
+    const raw = normalizeSignedTxHex(signed.signature)
+    const hash = await broadcastRawTransaction(raw, chainKey)
+    const txHash = signed.txHash?.startsWith('0x')
+      ? (signed.txHash as Hex)
+      : hash
+
+    return {
+      hash: txHash,
+      explorerUrl: `${explorerBase}/tx/${txHash}`,
+    }
+  } catch (e) {
+    throw new Error(formatEvmError(e))
   }
 }
 
@@ -258,7 +319,12 @@ export async function sendSepoliaTransfer(
     throw new Error('转账与 Swap 当前仅支持 Sepolia，其他链可先查看余额')
   }
 
-  const amountRaw = parseUnits(params.amount, token.decimals)
+  let amountRaw: bigint
+  try {
+    amountRaw = parseUnits(params.amount, token.decimals)
+  } catch {
+    throw new Error('金额格式不正确，请使用数字和小数点（例如 0.01）')
+  }
 
   if (token.address === null) {
     if (amountRaw <= 0n) throw new Error('转账金额须大于 0')

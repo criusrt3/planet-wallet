@@ -13,6 +13,8 @@ import {
 } from 'viem'
 import { getTokenById, SEPOLIA_TOKENS } from './chains'
 import {
+  assertSepoliaGasBalance,
+  formatEvmError,
   readErc20Allowance,
   signAndBroadcast,
   type SignBroadcastResult,
@@ -122,7 +124,7 @@ async function trySwapWithFee(
       data,
       value,
     })
-    return signAndBroadcast({
+    return await signAndBroadcast({
       keystoreJson: params.keystoreJson,
       walletPassword: params.walletPassword,
       from: params.from,
@@ -130,7 +132,13 @@ async function trySwapWithFee(
       value,
       data,
     })
-  } catch {
+  } catch (e) {
+    const msg = formatEvmError(e)
+    if (
+      /余额|Gas|Token Core|签名|取消|RPC|nonce|insufficient/i.test(msg)
+    ) {
+      throw new Error(msg)
+    }
     return null
   }
 }
@@ -153,8 +161,15 @@ export async function executeSepoliaSwap(
 
   const from = resolveTokenAddress(params.fromTokenId)
   const to = resolveTokenAddress(params.toTokenId)
-  const amountIn = parseUnits(params.amountIn, from.decimals)
+  let amountIn: bigint
+  try {
+    amountIn = parseUnits(params.amountIn, from.decimals)
+  } catch {
+    throw new Error('兑换数量格式不正确，请使用数字和小数点')
+  }
   if (amountIn <= 0n) throw new Error('兑换数量须大于 0')
+
+  await assertSepoliaGasBalance(params.from, from.isNative ? amountIn : 0n)
 
   let approveResult: SignBroadcastResult | undefined
 
@@ -197,6 +212,6 @@ export async function executeSepoliaSwap(
   }
 
   throw new Error(
-    '未找到可用流动性池。请确认 Sepolia 上存在该交易对，或尝试 USDC ↔ LINK 等小额度兑换。',
+    '未找到可用流动性池或模拟执行失败。请确认钱包有 Sepolia ETH 作 Gas，并尝试 USDC ↔ LINK 等小额度兑换。',
   )
 }

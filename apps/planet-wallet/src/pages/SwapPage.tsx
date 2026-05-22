@@ -4,7 +4,12 @@ import { ArrowDownUp, ExternalLink, Info, RefreshCw } from 'lucide-react'
 import { OperationLearning } from '@/components/OperationLearning'
 import { useRequireTxAccess } from '@/hooks/use-require-tx-access'
 import { isUserCancelled } from '@/lib/confirm-action'
-import { explorerTxUrl, getTokenById, SEPOLIA_TOKENS } from '@/lib/chains'
+import {
+  assetKey,
+  explorerTxUrl,
+  getTokenById,
+  SEPOLIA_TOKENS,
+} from '@/lib/chains'
 import { useWallet } from '@/store/WalletContext'
 import { Button } from '@repo/ui/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card'
@@ -38,7 +43,7 @@ export function SwapPage() {
 
   if (blocked || !wallet) return null
 
-  const from = balances.find((b) => b.id === fromId)
+  const from = balances.find((b) => b.id === assetKey('sepolia', fromId))
   const toToken = getTokenById(toId)
   const needsApprove = fromId !== 'eth'
 
