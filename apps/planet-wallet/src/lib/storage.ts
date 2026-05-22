@@ -1,9 +1,11 @@
 import { DEFAULT_ENABLED_CHAIN_IDS } from '@/lib/chains'
 import { normalizeCompletedTasks } from '@/lib/tasks'
+import { normalizeTheme } from '@/lib/theme'
 import type { AppSettings, AppState, TaskId, WalletIdentity } from '@/types'
 
 export function normalizeSettings(raw?: Partial<AppSettings>): AppSettings {
   return {
+    theme: normalizeTheme(raw?.theme),
     showLearningHints: raw?.showLearningHints ?? true,
     walletLockEnabled: raw?.walletLockEnabled ?? false,
     walletLockHash: raw?.walletLockHash ?? null,
@@ -19,6 +21,7 @@ export const defaultState: AppState = {
   addressBook: [],
   txHistory: [],
   settings: {
+    theme: 'default',
     showLearningHints: true,
     walletLockEnabled: false,
     walletLockHash: null,

@@ -38,8 +38,8 @@ export function HomeTasksPanel() {
   return (
     <div className="space-y-5 animate-fade-up">
       <div>
-        <h2 className="text-title-sm font-bold">新手任务</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h2 className="app-page-title">新手任务</h2>
+        <p className="app-meta mt-2">
           完成 {TOTAL_TASKS} 项安全挑战，升级护盾并领取链上护照。资产与转账请使用底部「钱包」。
         </p>
       </div>
@@ -49,7 +49,7 @@ export function HomeTasksPanel() {
       <AiNavigator message={navigatorText} compact />
 
       <section>
-        <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+        <h3 className="app-meta mb-3">
           进度 · {completedTasks.length}/{TOTAL_TASKS}
         </h3>
         <TaskList completed={completedTasks} />

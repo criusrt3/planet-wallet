@@ -1,3 +1,4 @@
+import './lib/theme-init'
 import '@repo/ui/globals.css'
 import './app.css'
 

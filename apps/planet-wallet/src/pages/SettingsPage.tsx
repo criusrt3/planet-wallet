@@ -1,6 +1,7 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpen, LockKeyhole, Pencil, Settings, User } from 'lucide-react'
+import { BookOpen, LockKeyhole, Palette, Pencil, Settings, User } from 'lucide-react'
+import { THEME_OPTIONS } from '@/lib/theme'
 import { OperationLearning } from '@/components/OperationLearning'
 import { shortenAddress } from '@/lib/wallet'
 import { useWallet } from '@/store/WalletContext'
@@ -81,6 +82,7 @@ export function SettingsPage() {
     wallets,
     activeWalletId,
     settings,
+    setTheme,
     setShowLearningHints,
     updateWalletProfile,
     enableWalletPageLock,
@@ -202,6 +204,38 @@ export function SettingsPage() {
       </div>
 
       <Accordion type="multiple" className="space-y-4">
+        <SettingsAccordionSection value="theme" icon={Palette} title="外观主题">
+          <p className="app-meta">
+            当前为「{THEME_OPTIONS.find((o) => o.id === settings.theme)?.label ?? '默认'}」。主题保存在本机，切换后立即生效。
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {THEME_OPTIONS.map((opt) => {
+              const active = settings.theme === opt.id
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={`theme-option ${active ? 'theme-option--active' : ''}`}
+                  onClick={() => {
+                    if (!active) {
+                      setTheme(opt.id)
+                      toast.success(`已切换为${opt.label}`)
+                    }
+                  }}
+                >
+                  <span
+                    className="theme-option__swatch"
+                    data-preview={opt.id}
+                    aria-hidden
+                  />
+                  <span className="theme-option__label">{opt.label}</span>
+                  <span className="theme-option__desc">{opt.description}</span>
+                </button>
+              )
+            })}
+          </div>
+        </SettingsAccordionSection>
+
         {wallets.length > 0 && (
           <SettingsAccordionSection
             value="profile"

@@ -34,7 +34,6 @@ export function TaskList({ completed }: { completed: TaskId[] }) {
                 const done = completed.includes(id)
                 const meta = TASK_META[id]
                 const hint = getTaskHint(id, done)
-                const tone = done ? 'success' : 'neutral'
                 const description = done
                   ? `${meta.reviewLabel ?? '点击查看'} · ${hint}`
                   : `${meta.description} · ${hint}`
@@ -49,8 +48,9 @@ export function TaskList({ completed }: { completed: TaskId[] }) {
                       <ChecklistCard
                         title={meta.title}
                         description={description}
-                        tone={tone}
-                        className="w-full text-left transition hover:border-primary/40"
+                        className={`task-glass-card w-full text-left ${
+                          done ? 'task-glass-card--done' : 'task-glass-card--pending'
+                        }`}
                       />
                     </button>
                   </li>

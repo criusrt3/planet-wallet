@@ -3,8 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { BookUser, ExternalLink, Send, Shield } from 'lucide-react'
 import { OperationLearning } from '@/components/OperationLearning'
 import { ShieldStatusBar } from '@/components/ShieldStatusBar'
-import { SignTranslator } from '@/components/SignTranslator'
-import { analyzeSignRequest } from '@/lib/security'
 import { isUserCancelled } from '@/lib/confirm-action'
 import {
   assetKey,
@@ -44,7 +42,6 @@ export function TransferPage() {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [poisonWarn, setPoisonWarn] = useState<string | null>(null)
-  const txAnalysis = analyzeSignRequest('eth_sendTransaction')
 
   useEffect(() => {
     if (!wallet) navigate('/create')
@@ -86,7 +83,6 @@ export function TransferPage() {
     <div className="space-y-4 animate-fade-up">
       <OperationLearning scene="transfer" actionType="eth_sendTransaction" compact />
       <ShieldStatusBar pulse={shieldPulse} />
-      <SignTranslator analysis={txAnalysis} />
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">

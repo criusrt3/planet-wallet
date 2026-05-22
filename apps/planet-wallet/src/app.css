@@ -1,29 +1,27 @@
 /**
- * 星球钱包 · imToken 10 周年视觉层
- * 色彩：@repo/ui `.dark` · 排版：细腻字重 + 统一间距与 elevation
+ * 星球钱包 · imToken 品牌蓝 + 任务玻璃卡
  */
 
 html.dark {
   --anniversary-teal: 13 148 136;
-  --anniversary-teal-glow: 20 184 166;
   --imtoken-navy-deep: 8 14 37;
   --imtoken-navy-mid: 12 22 55;
   --imtoken-navy-card: 15 26 67;
 
-  /* 排版微调 */
   --app-tracking-body: 0.012em;
-  --app-tracking-caption: 0.06em;
+  --app-tracking-caption: 0.05em;
   --app-tracking-label: 0.08em;
   --app-leading-body: 1.62;
   --app-leading-tight: 1.35;
-  --app-section-gap: 1.25rem;
   --shadow-elevated:
-    0 1px 0 color-mix(in srgb, rgb(255 255 255) 5%, transparent) inset,
-    0 8px 32px -8px color-mix(in srgb, var(--primary) 14%, transparent),
-    0 2px 8px -2px rgba(0, 0, 0, 0.35);
+    0 1px 0 color-mix(in srgb, rgb(255 255 255) 6%, transparent) inset,
+    0 8px 28px -8px color-mix(in srgb, var(--primary) 18%, transparent),
+    0 2px 8px -2px rgba(0, 0, 0, 0.32);
+  --shadow-glass-task:
+    inset 0 1px 0 color-mix(in srgb, rgb(255 255 255) 22%, transparent),
+    0 4px 24px -6px color-mix(in srgb, var(--primary) 22%, transparent);
 }
 
-/* ── 应用壳：中文优先、抗锯齿、略疏字距 ── */
 .app-shell {
   font-family: var(--font-chinese);
   font-weight: 400;
@@ -38,7 +36,6 @@ html.dark {
   line-height: var(--app-leading-body);
 }
 
-/* 页面主标题（替代过粗的 font-bold） */
 .app-page-title {
   font-size: var(--text-title-sm);
   line-height: var(--text-title-sm--line-height);
@@ -57,13 +54,12 @@ html.dark {
   letter-spacing: -0.03em;
 }
 
-/* 辅助说明：略大字号 + 疏字距，避免 10px 发糊 */
 .app-meta {
   font-size: var(--text-caption);
   line-height: 1.55;
   font-weight: 400;
   letter-spacing: var(--app-tracking-caption);
-  color: color-mix(in srgb, var(--muted-foreground) 88%, transparent);
+  color: color-mix(in srgb, var(--muted-foreground) 92%, transparent);
 }
 
 .app-shell .text-\[10px\]:not(.font-mono) {
@@ -73,11 +69,10 @@ html.dark {
 }
 
 .app-label-caps {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: var(--app-tracking-label);
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--muted-foreground) 85%, transparent);
+  color: color-mix(in srgb, var(--foreground) 88%, var(--muted-foreground));
 }
 
 .app-mono {
@@ -88,31 +83,166 @@ html.dark {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── 背景 ── */
-body {
+/* ── 默认主题：imToken 深海蓝背景 ── */
+html.dark body {
   background-color: var(--background);
   background-image:
     radial-gradient(
-      ellipse 110% 70% at 50% -15%,
-      color-mix(in srgb, var(--primary) 22%, transparent),
-      transparent 52%
+      ellipse 100% 65% at 50% -12%,
+      color-mix(in srgb, var(--primary) 24%, transparent),
+      transparent 50%
     ),
     radial-gradient(
-      ellipse 70% 55% at 95% 35%,
-      color-mix(in srgb, var(--brand-secondary) 14%, transparent),
+      ellipse 65% 50% at 100% 40%,
+      color-mix(in srgb, var(--brand-secondary) 12%, transparent),
       transparent 48%
-    ),
-    radial-gradient(
-      ellipse 65% 50% at 5% 85%,
-      color-mix(in srgb, rgb(var(--anniversary-teal)) 10%, transparent),
-      transparent 45%
     ),
     linear-gradient(
       180deg,
       rgb(var(--imtoken-navy-deep)) 0%,
-      var(--background) 42%,
+      var(--background) 45%,
       rgb(var(--imtoken-navy-card)) 100%
     );
+}
+
+/* ── 亮白主题：imToken 蓝 + 白底 ── */
+html:not(.dark) {
+  --anniversary-teal: 13 148 136;
+  --app-tracking-body: 0.012em;
+  --app-tracking-caption: 0.04em;
+  --app-tracking-label: 0.06em;
+  --app-leading-body: 1.62;
+  --app-leading-tight: 1.35;
+  --shadow-elevated:
+    0 1px 0 color-mix(in srgb, white 80%, transparent) inset,
+    0 8px 24px -6px color-mix(in srgb, var(--primary) 12%, transparent);
+  --shadow-glass-task:
+    inset 0 1px 0 color-mix(in srgb, white 90%, transparent),
+    0 4px 16px -4px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+html:not(.dark) body {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(
+      ellipse 90% 55% at 50% -8%,
+      color-mix(in srgb, var(--primary-soft) 85%, transparent),
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse 60% 45% at 100% 0%,
+      color-mix(in srgb, var(--surface-blue-info) 70%, transparent),
+      transparent 50%
+    ),
+    linear-gradient(180deg, rgb(255 255 255) 0%, var(--surface-cool) 100%);
+}
+
+html:not(.dark) .task-glass-card--pending {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, white 92%, transparent) 0%,
+    color-mix(in srgb, var(--surface-blue) 75%, transparent) 100%
+  ) !important;
+  border-color: color-mix(in srgb, var(--primary) 18%, var(--border)) !important;
+}
+
+html:not(.dark) .task-glass-card--done {
+  background: linear-gradient(
+    125deg,
+    color-mix(in srgb, var(--primary-soft) 65%, white) 0%,
+    color-mix(in srgb, var(--surface-blue) 80%, white) 50%,
+    color-mix(in srgb, white 95%, var(--surface-blue-light)) 100%
+  ) !important;
+  border-color: color-mix(in srgb, var(--primary) 28%, transparent) !important;
+}
+
+html:not(.dark) .task-glass-card--done > div:nth-child(2) {
+  color: color-mix(in srgb, var(--primary) 65%, var(--muted-foreground)) !important;
+}
+
+html:not(.dark) .passport-anniversary-bg {
+  background: linear-gradient(
+    145deg,
+    white 0%,
+    var(--surface-blue) 45%,
+    color-mix(in srgb, rgb(var(--anniversary-teal)) 12%, var(--surface-blue-info)) 100%
+  );
+}
+
+html:not(.dark) .app-bottom-nav {
+  border-top-color: var(--border);
+  background: color-mix(in srgb, white 94%, transparent);
+  box-shadow: 0 -4px 24px -8px color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+html:not(.dark) .app-nav-link--active {
+  color: var(--primary);
+  background: var(--surface-blue);
+}
+
+html:not(.dark) .app-shell [data-slot="card"] {
+  background: color-mix(in srgb, white 96%, var(--surface-blue) 4%);
+  border-color: var(--border);
+  box-shadow: var(--shadow-card);
+}
+
+html:not(.dark) .app-shell [data-slot="chat-bubble"] {
+  background: var(--surface-blue);
+  border-color: color-mix(in srgb, var(--primary) 15%, var(--border));
+}
+
+/* 设置 · 主题选项 */
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  text-align: left;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.theme-option:hover {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+}
+
+.theme-option--active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.theme-option__swatch {
+  display: block;
+  width: 100%;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.theme-option__swatch[data-preview="default"] {
+  background: linear-gradient(135deg, rgb(8 14 37), rgb(44 146 250));
+}
+
+.theme-option__swatch[data-preview="light"] {
+  background: linear-gradient(135deg, white 40%, rgb(207 228 250), rgb(0 127 255));
+}
+
+.theme-option__label {
+  font-size: var(--text-body-md);
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.theme-option__desc {
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  color: var(--muted-foreground);
 }
 
 .app-brand-title {
@@ -121,14 +251,108 @@ body {
   line-height: var(--app-leading-tight);
 }
 
-.app-brand-title.identity-gradient {
-  font-weight: 600;
+/* identity-gradient 使用 @repo/ui/globals.css 默认 imToken 渐变 */
+
+/* ── 任务玻璃卡：品牌蓝磨砂 + 顶缘高光 ── */
+.task-glass-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem !important;
+  padding: 1rem 1.25rem !important;
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent) !important;
+  transition:
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.2s ease;
 }
 
-/* ── 卡片与列表：统一圆角、轻 elevation ── */
+.task-glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--brand-secondary) 55%, white) 40%,
+    color-mix(in srgb, var(--primary) 40%, white) 60%,
+    transparent
+  );
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.task-glass-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--primary) 8%, transparent) 0%,
+    transparent 45%
+  );
+  pointer-events: none;
+}
+
+.task-glass-card--pending {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--card) 72%, transparent) 0%,
+    color-mix(in srgb, var(--surface-blue) 55%, transparent) 100%
+  ) !important;
+  box-shadow: var(--shadow-glass-task);
+}
+
+.task-glass-card--done {
+  border-color: color-mix(in srgb, var(--primary) 38%, var(--brand-secondary)) !important;
+  background: linear-gradient(
+    125deg,
+    color-mix(in srgb, var(--primary) 28%, transparent) 0%,
+    color-mix(in srgb, var(--card) 68%, transparent) 42%,
+    color-mix(in srgb, var(--surface-blue-light) 35%, transparent) 100%
+  ) !important;
+  box-shadow:
+    var(--shadow-glass-task),
+    0 0 0 1px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.task-glass-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 42%, transparent) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 28%, transparent),
+    0 8px 28px -6px color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+.task-glass-card > div:first-child {
+  position: relative;
+  z-index: 1;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  color: var(--foreground) !important;
+}
+
+.task-glass-card > div:nth-child(2) {
+  position: relative;
+  z-index: 1;
+  margin-top: 0.375rem !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.55 !important;
+  color: color-mix(in srgb, var(--foreground) 78%, var(--muted-foreground)) !important;
+}
+
+.task-glass-card--done > div:nth-child(2) {
+  color: color-mix(in srgb, var(--brand-secondary) 55%, var(--foreground)) !important;
+}
+
+/* ── 通用卡片 ── */
 .app-shell [data-slot="card"] {
   border-radius: var(--radius-lg);
-  border-color: color-mix(in srgb, var(--border) 62%, transparent);
+  border-color: color-mix(in srgb, var(--border) 65%, transparent);
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  backdrop-filter: blur(14px);
   box-shadow: var(--shadow-elevated);
 }
 
@@ -137,42 +361,12 @@ body {
   letter-spacing: -0.02em;
 }
 
-.app-shell [data-slot="checklist-card"] {
-  border-radius: var(--radius-md);
-  border-color: color-mix(in srgb, var(--border) 58%, transparent);
-  padding: 1rem 1.125rem;
-  transition:
-    border-color 0.22s ease,
-    box-shadow 0.22s ease;
-}
-
-.app-shell [data-slot="checklist-card"] > div:first-child {
-  font-size: var(--text-body-md);
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  line-height: var(--text-body-md--line-height);
-}
-
-.app-shell [data-slot="checklist-card"] > div:nth-child(2) {
-  margin-top: 0.375rem;
-  font-size: var(--text-body-sm);
-  line-height: var(--app-leading-body);
-  letter-spacing: 0.01em;
-}
-
-.app-shell [data-slot="checklist-card"]:hover {
-  border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent);
-}
-
 .app-shell [data-slot="chat-bubble"] {
   font-size: var(--text-body-md);
   line-height: var(--app-leading-body);
-  font-weight: 400;
-  letter-spacing: 0.01em;
   border-radius: 1.125rem;
-  border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
-  background: color-mix(in srgb, var(--card) 88%, var(--surface-blue) 12%);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  background: color-mix(in srgb, var(--card) 85%, var(--surface-blue) 15%);
 }
 
 .glass-card {
@@ -188,11 +382,10 @@ body {
     145deg,
     color-mix(in srgb, rgb(17 29 74) 92%, transparent) 0%,
     color-mix(in srgb, var(--surface-blue) 55%, transparent) 38%,
-    color-mix(in srgb, rgb(var(--anniversary-teal)) 18%, transparent) 100%
+    color-mix(in srgb, rgb(var(--anniversary-teal)) 16%, transparent) 100%
   );
 }
 
-/* ── 顶栏与底栏 ── */
 .app-header-badge {
   font-size: 0.6875rem;
   font-weight: 500;
@@ -202,15 +395,15 @@ body {
 }
 
 .app-bottom-nav {
-  border-top-color: color-mix(in srgb, var(--primary) 22%, var(--border));
-  background: color-mix(in srgb, var(--background) 96%, transparent);
-  backdrop-filter: blur(24px) saturate(1.15);
+  border-top-color: color-mix(in srgb, var(--primary) 20%, var(--border));
+  background: color-mix(in srgb, var(--background) 97%, transparent);
+  backdrop-filter: blur(20px) saturate(1.1);
 }
 
 .app-nav-link {
   min-width: 3.5rem;
-  padding: 0.4rem 0.65rem;
-  border-radius: var(--radius-lg);
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.75rem;
   transition:
     color 0.2s ease,
     background 0.2s ease;
@@ -218,17 +411,22 @@ body {
 
 .app-nav-link--active {
   color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 11%, transparent);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.app-nav-link:not(.app-nav-link--active) {
+  color: var(--muted-foreground);
 }
 
 .app-nav-link:not(.app-nav-link--active):hover {
-  color: color-mix(in srgb, var(--foreground) 75%, var(--muted-foreground));
+  color: color-mix(in srgb, var(--foreground) 80%, var(--muted-foreground));
 }
 
 .app-nav-label {
   font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
 }
 
 /* ── 星球动效 ── */
@@ -245,13 +443,13 @@ body {
   0%,
   100% {
     box-shadow:
-      0 0 18px color-mix(in srgb, var(--primary) 38%, transparent),
+      0 0 18px color-mix(in srgb, var(--primary) 40%, transparent),
       0 0 28px color-mix(in srgb, var(--brand-secondary) 18%, transparent);
   }
   50% {
     box-shadow:
-      0 0 28px color-mix(in srgb, var(--primary) 48%, transparent),
-      0 0 40px color-mix(in srgb, rgb(var(--anniversary-teal)) 28%, transparent);
+      0 0 28px color-mix(in srgb, var(--primary) 50%, transparent),
+      0 0 40px color-mix(in srgb, rgb(var(--anniversary-teal)) 22%, transparent);
   }
 }
 

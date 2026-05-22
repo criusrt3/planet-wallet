@@ -55,7 +55,11 @@ export interface AddressBookEntry {
   createdAt: string
 }
 
+export type AppTheme = 'default' | 'light'
+
 export interface AppSettings {
+  /** 外观：default 深海蓝 · light 亮白 */
+  theme: AppTheme
   /** 操作时显示 AI 学习与风险解释 */
   showLearningHints: boolean
   /** 进入钱包页（/planet）前需输入密码 */

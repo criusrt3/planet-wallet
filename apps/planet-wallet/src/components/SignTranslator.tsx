@@ -40,14 +40,11 @@ export function SignTranslator({ analysis }: { analysis: SignAnalysis }) {
           {analysis.aiTranslation}
         </AlertDescription>
       </Alert>
-      <p className="text-xs text-muted-foreground whitespace-pre-line">
-        {analysis.detail}
-      </p>
-      {analysis.irreversible && (
-        <p className="text-xs text-warning-text">
-          此类型操作可能无法撤回，请谨慎确认。
+      {analysis.detail ? (
+        <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
+          {analysis.detail}
         </p>
-      )}
+      ) : null}
       {analysis.skillRef && (
         <p className="text-[10px] text-muted-foreground border-t border-border/60 pt-2">
           Security Skill · {analysis.skillRef}

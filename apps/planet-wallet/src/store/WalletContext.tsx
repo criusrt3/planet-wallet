@@ -43,6 +43,7 @@ import {
   saveState,
   STORAGE_KEY,
 } from '@/lib/storage'
+import { applyTheme } from '@/lib/theme'
 import {
   hashWalletLockPassword,
   validateWalletLockPassword,
@@ -57,6 +58,7 @@ import {
 import type {
   AddressBookEntry,
   AppState,
+  AppTheme,
   ShieldLevel,
   TaskId,
   TokenBalanceView,
@@ -101,6 +103,7 @@ interface WalletContextValue extends AppState {
   addAddressBookEntry: (entry: Omit<AddressBookEntry, 'id' | 'createdAt'>) => void
   removeAddressBookEntry: (id: string) => Promise<void>
   setShowLearningHints: (value: boolean) => void
+  setTheme: (theme: AppTheme) => void
   /** 钱包页已解锁（未开启锁时恒为 true） */
   isWalletPageUnlocked: boolean
   unlockWalletPage: (password: string) => Promise<boolean>
@@ -189,6 +192,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [walletPageUnlocked, setWalletPageUnlocked] = useState(false)
 
   const wallet = useMemo(() => getActiveWallet(state), [state])
+
+  useEffect(() => {
+    applyTheme(state.settings.theme)
+  }, [state.settings.theme])
 
   const persist = useCallback((updater: (prev: AppState) => AppState) => {
     setState((prev) => {
@@ -581,6 +588,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [persist],
   )
 
+  const setTheme = useCallback(
+    (theme: AppTheme) => {
+      applyTheme(theme)
+      persist((prev) => ({
+        ...prev,
+        settings: { ...prev.settings, theme },
+      }))
+    },
+    [persist],
+  )
+
   const isWalletPageUnlocked =
     !state.settings.walletLockEnabled || walletPageUnlocked
 
@@ -692,6 +710,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setBalances([])
     setLastTxHash(null)
     setWalletPageUnlocked(false)
+    applyTheme('default')
   }, [])
 
   const navigatorText = useMemo(() => {
@@ -739,6 +758,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     addAddressBookEntry,
     removeAddressBookEntry,
     setShowLearningHints,
+    setTheme,
     isWalletPageUnlocked,
     unlockWalletPage,
     lockWalletPage,
