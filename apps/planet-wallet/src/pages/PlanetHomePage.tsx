@@ -36,19 +36,6 @@ function TokenAvatar({ symbol, color }: { symbol: string; color: string }) {
   )
 }
 
-function groupByChain(balances: TokenBalanceView[]) {
-  const map = new Map<string, TokenBalanceView[]>()
-  for (const b of balances) {
-    const list = map.get(b.chainId) ?? []
-    list.push(b)
-    map.set(b.chainId, list)
-  }
-  return [...map.entries()].map(([chainId, items]) => ({
-    chainId,
-    chainName: items[0]?.chainName ?? chainId,
-    items,
-  }))
-}
 
 export function PlanetHomePage() {
   const navigate = useNavigate()
@@ -63,13 +50,25 @@ export function PlanetHomePage() {
     lockWalletPage,
   } = useWallet()
   const [copied, setCopied] = useState(false)
-
-  const chainGroups = useMemo(() => groupByChain(balances), [balances])
   const enabledChainIds = wallet?.enabledChainIds ?? ['sepolia']
+  const [activeChainId, setActiveChainId] = useState(enabledChainIds[0] ?? 'sepolia')
+
+  const activeBalances = useMemo(
+    () => balances.filter((b) => b.chainId === activeChainId),
+    [balances, activeChainId],
+  )
+
+  const activeChain = getChainById(activeChainId)
 
   useEffect(() => {
     if (!wallet) navigate('/create')
   }, [wallet, navigate])
+
+  useEffect(() => {
+    if (!enabledChainIds.includes(activeChainId)) {
+      setActiveChainId(enabledChainIds[0] ?? 'sepolia')
+    }
+  }, [enabledChainIds, activeChainId])
 
   useEffect(() => {
     if (settings.walletLockEnabled) lockWalletPage()
@@ -91,32 +90,17 @@ export function PlanetHomePage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const ethBalance = balances.find(
-    (b) => b.chainId === 'sepolia' && b.tokenId === 'eth',
-  )
+  const nativeBalance = activeBalances.find((b) => b.isNative)
 
   return (
     <div className="space-y-5 animate-fade-up">
-      {enabledChainIds.length > 0 && (
-        <div className="flex flex-wrap justify-end gap-2">
-          {enabledChainIds.map((id) => {
-            const c = getChainById(id)
-            return (
-              <Badge key={id} variant="primary" className="text-[10px]">
-                {c?.shortName ?? id}
-              </Badge>
-            )
-          })}
-        </div>
-      )}
-
       <PlanetVisualization
         interactive
         title={wallet.nickname}
         subtitle={
-          ethBalance
-            ? `${ethBalance.formatted} ${ethBalance.symbol} · Sepolia`
-            : 'Sepolia 测试网'
+          nativeBalance
+            ? `${nativeBalance.formatted} ${nativeBalance.symbol} · ${activeChain?.shortName ?? activeChainId}`
+            : `${activeChain?.shortName ?? '测试网'}`
         }
       />
       <div className="text-center -mt-1">
@@ -138,12 +122,12 @@ export function PlanetHomePage() {
           <p className="text-xs text-success-text mt-1">已复制完整地址</p>
         )}
         <a
-          href={explorerAddressUrl('sepolia', wallet.address)}
+          href={explorerAddressUrl(activeChainId, wallet.address)}
           target="_blank"
           rel="noreferrer"
           className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
         >
-          在 Sepolia 浏览器查看
+          在 {activeChain?.shortName ?? '链'} 浏览器查看
           <ExternalLink className="h-3 w-3" />
         </a>
       </div>
@@ -171,56 +155,91 @@ export function PlanetHomePage() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
+          {enabledChainIds.length > 1 ? (
+            <div
+              className="asset-chain-tabs"
+              role="tablist"
+              aria-label="切换资产链"
+            >
+              {enabledChainIds.map((id) => {
+                const chain = getChainById(id)
+                const active = id === activeChainId
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    className={`asset-chain-tab ${active ? 'asset-chain-tab--active' : ''}`}
+                    onClick={() => setActiveChainId(id)}
+                  >
+                    <span
+                      className="asset-chain-tab__dot"
+                      style={{ background: chain?.themeColor ?? 'var(--primary)' }}
+                      aria-hidden
+                    />
+                    {chain?.shortName ?? id}
+                  </button>
+                )
+              })}
+            </div>
+          ) : enabledChainIds.length === 1 ? (
+            <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
+              <span
+                className="inline-block size-2.5 rounded-full"
+                style={{
+                  background:
+                    getChainById(enabledChainIds[0])?.themeColor ?? 'var(--primary)',
+                }}
+                aria-hidden
+              />
+              <span className="text-xs font-semibold text-muted-foreground">
+                {getChainById(enabledChainIds[0])?.shortName ?? enabledChainIds[0]}
+              </span>
+              <Badge variant="neutral" className="text-[10px] ml-auto">
+                {getChainById(enabledChainIds[0])?.chainId}
+              </Badge>
+            </div>
+          ) : null}
+
           {balancesLoading && balances.length === 0 ? (
             <div className="space-y-3 p-4">
               <Skeleton className="h-14 w-full" />
               <Skeleton className="h-14 w-full" />
             </div>
-          ) : chainGroups.length === 0 ? (
+          ) : enabledChainIds.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground text-center">
               尚未添加任何链，
               <Link to="/assets" className="text-primary hover:underline">
                 去添加多链资产
               </Link>
             </p>
+          ) : activeBalances.length === 0 ? (
+            <p className="p-4 text-sm text-muted-foreground text-center">
+              {activeChain?.shortName ?? activeChainId} 暂无余额数据，请稍后刷新
+            </p>
           ) : (
-            chainGroups.map((group) => {
-              const chain = getChainById(group.chainId)
-              return (
-                <div
-                  key={group.chainId}
-                  className="border-t border-border first:border-t-0"
-                >
-                  <div className="flex items-center justify-between px-4 py-2 bg-muted/40">
-                    <span className="text-xs font-semibold text-muted-foreground">
-                      {group.chainName}
-                    </span>
-                    <Badge variant="neutral" className="text-[10px]">
-                      {chain?.chainId}
-                    </Badge>
-                  </div>
-                  <div className="divide-y divide-border">
-                    {group.items.map((b) => (
-                      <AssetRow
-                        key={b.id}
-                        avatar={
-                          <TokenAvatar symbol={b.symbol} color={b.color} />
-                        }
-                        symbol={b.symbol}
-                        amount={b.name}
-                        value={`${Number.parseFloat(b.formatted).toLocaleString(undefined, { maximumFractionDigits: 6 })}`}
-                        detail={b.isNative ? '原生 gas' : 'ERC-20'}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )
-            })
+            <div className="divide-y divide-border">
+              {activeBalances.map((b) => (
+                <AssetRow
+                  key={b.id}
+                  avatar={
+                    <TokenAvatar symbol={b.symbol} color={b.color} />
+                  }
+                  symbol={b.symbol}
+                  amount={b.name}
+                  value={`${Number.parseFloat(b.formatted).toLocaleString(undefined, { maximumFractionDigits: 6 })}`}
+                  detail={b.isNative ? '原生 gas' : 'ERC-20'}
+                />
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
 
-      {ethBalance && Number.parseFloat(ethBalance.formatted) < 0.001 && (
+      {activeChainId === 'sepolia' &&
+        nativeBalance &&
+        Number.parseFloat(nativeBalance.formatted) < 0.001 && (
         <Card className="border-warning-border bg-warning-surface">
           <CardContent className="p-4 space-y-2">
             <p className="text-sm font-medium text-warning-text">

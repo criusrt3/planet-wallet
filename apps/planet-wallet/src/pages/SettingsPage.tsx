@@ -1,6 +1,14 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpen, LockKeyhole, Palette, Pencil, Settings, User } from 'lucide-react'
+import {
+  BookOpen,
+  Globe,
+  LockKeyhole,
+  Palette,
+  Pencil,
+  Settings,
+  User,
+} from 'lucide-react'
 import { getThemeStatusLabel, THEME_OPTIONS } from '@/lib/theme'
 import { OperationLearning } from '@/components/OperationLearning'
 import { shortenAddress } from '@/lib/wallet'
@@ -234,6 +242,24 @@ export function SettingsPage() {
               )
             })}
           </div>
+        </SettingsAccordionSection>
+
+        <SettingsAccordionSection
+          value="real-environment"
+          icon={Globe}
+          title="一键切换真实环境"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <p className="text-xs text-muted-foreground leading-[1.6]">
+                在测试网演示与主网真实环境之间一键切换，便于活动演示与真实使用场景对照。上线前请确认资产与 Gas 风险。
+              </p>
+            </div>
+            <span className="settings-coming-soon shrink-0">Coming soon</span>
+          </div>
+          <Button variant="outline" className="w-full" disabled>
+            一键切换真实环境
+          </Button>
         </SettingsAccordionSection>
 
         {wallets.length > 0 && (

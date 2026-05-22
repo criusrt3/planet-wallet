@@ -39,8 +39,8 @@ export function AssetsPage() {
       <OperationLearning scene="switch_wallet" compact />
 
       <p className="text-sm text-muted-foreground">
-        同一身份地址可在多条 EVM 测试网查询余额。开启后会在首页按链分组展示；转账与 Swap 仍使用
-        Sepolia。
+        同一身份地址可在多条 EVM 测试网查询余额。开启后可在首页「我的资产」顶部切换链查看；转账与
+        Swap 仍使用 Sepolia。
       </p>
 
       <Card>
