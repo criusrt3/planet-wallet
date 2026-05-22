@@ -9,6 +9,7 @@ import {
   Send,
   Shield,
 } from 'lucide-react'
+import { ShieldGatedLink } from '@/components/ShieldGatedLink'
 import { PlanetVisualization } from '@/components/PlanetVisualization'
 import { WalletPageLockScreen } from '@/components/WalletPageLockScreen'
 import { useRequireWallet } from '@/hooks/use-require-wallet'
@@ -266,13 +267,15 @@ export function PlanetHomePage() {
 
       <div className="grid grid-cols-2 gap-2">
         <Button className="w-full" asChild>
-          <Link to="/transfer">
+          <ShieldGatedLink to="/transfer" requireTxAccess className="inline-flex w-full items-center justify-center">
             <Send className="mr-2 h-4 w-4" />
             转账
-          </Link>
+          </ShieldGatedLink>
         </Button>
         <Button variant="secondary" className="w-full" asChild>
-          <Link to="/swap">兑换</Link>
+          <ShieldGatedLink to="/swap" requireTxAccess className="inline-flex w-full items-center justify-center">
+            兑换
+          </ShieldGatedLink>
         </Button>
       </div>
 

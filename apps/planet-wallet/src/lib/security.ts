@@ -124,7 +124,7 @@ export const SHIELD_COPY: Record<ShieldLevel, ShieldLevelMeta> = {
     description: '能区分登录签名、授权与转账，或完成实战挑战。',
     color: 'text-ai-text',
     unlockCondition:
-      '完成「第一次安全签名」，或完成「危险授权 / 假空投 / 地址投毒」任一实战任务。',
+      '完成「第一次安全签名」，或完成「危险授权 / 假空投 / 地址投毒」任一实战任务；解锁转账与兑换。',
   },
   gold: {
     rank: 4,

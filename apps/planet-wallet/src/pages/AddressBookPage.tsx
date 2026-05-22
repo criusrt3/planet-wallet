@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { BookUser, Trash2 } from 'lucide-react'
+import { ShieldGatedLink } from '@/components/ShieldGatedLink'
 import { isAddress } from 'viem'
 import { OperationLearning } from '@/components/OperationLearning'
 import { useWallet } from '@/store/WalletContext'
@@ -127,7 +127,9 @@ export function AddressBookPage() {
       </Card>
 
       <Button variant="ghost" size="sm" asChild>
-        <Link to="/transfer">去转账</Link>
+        <ShieldGatedLink to="/transfer" requireTxAccess>
+          去转账
+        </ShieldGatedLink>
       </Button>
     </div>
   )

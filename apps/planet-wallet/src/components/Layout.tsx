@@ -1,6 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Globe, Home, Send, Settings, Shield } from 'lucide-react'
 import { WalletSwitcher } from '@/components/WalletSwitcher'
+import {
+  canPerformChainOperations,
+  promptPurpleShieldRequired,
+} from '@/lib/shield-guard'
 import { promptCreateWallet } from '@/lib/wallet-guard'
 import { useWallet } from '@/store/WalletContext'
 import { Badge } from '@repo/ui/components/badge'
@@ -8,7 +12,13 @@ import { Badge } from '@repo/ui/components/badge'
 const NAV = [
   { to: '/', icon: Home, label: '欢迎', labelWithWallet: '任务' },
   { to: '/planet', icon: Globe, label: '钱包', needsWallet: true },
-  { to: '/transfer', icon: Send, label: '转账', needsWallet: true },
+  {
+    to: '/transfer',
+    icon: Send,
+    label: '转账',
+    needsWallet: true,
+    needsPurpleShield: true,
+  },
   { to: '/security', icon: Shield, label: '安全' },
   { to: '/settings', icon: Settings, label: '设置' },
 ]
@@ -16,8 +26,9 @@ const NAV = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const { wallets } = useWallet()
+  const { wallets, shieldLevel, completedTasks } = useWallet()
   const hasWallet = wallets.length > 0
+  const canTx = canPerformChainOperations(shieldLevel)
 
   return (
     <div className="app-shell mx-auto flex min-h-dvh max-w-lg flex-col px-5 pb-[calc(4.5rem+env(safe-area-inset-bottom))] pt-7">
@@ -41,12 +52,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1">{children}</main>
       <nav className="app-bottom-nav fixed bottom-0 left-0 right-0 z-50 border-t">
         <div className="mx-auto flex max-w-lg justify-around px-2 py-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-          {NAV.map(({ to, icon: Icon, label, labelWithWallet, needsWallet }) => {
+          {NAV.map(
+            ({
+              to,
+              icon: Icon,
+              label,
+              labelWithWallet,
+              needsWallet,
+              needsPurpleShield,
+            }) => {
             const tabLabel =
               to === '/' && hasWallet && labelWithWallet
                 ? labelWithWallet
                 : label
-            const disabled = needsWallet && !hasWallet
+            const walletLocked = Boolean(needsWallet && !hasWallet)
+            const shieldLocked = Boolean(
+              needsPurpleShield && hasWallet && !canTx,
+            )
+            const disabled = walletLocked || shieldLocked
             const active = pathname === to
             if (disabled) {
               return (
@@ -54,8 +77,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   key={to}
                   type="button"
                   className="app-nav-link app-nav-link--disabled flex flex-col items-center gap-1 text-muted-foreground/50"
-                  aria-label={`${tabLabel}（需先创建钱包）`}
-                  onClick={() => promptCreateWallet(navigate)}
+                  aria-label={
+                    walletLocked
+                      ? `${tabLabel}（需先创建钱包）`
+                      : `${tabLabel}（需紫色护盾）`
+                  }
+                  onClick={() => {
+                    if (walletLocked) promptCreateWallet(navigate)
+                    else promptPurpleShieldRequired(navigate, completedTasks)
+                  }}
                 >
                   <Icon className="h-[1.35rem] w-[1.35rem] stroke-[1.65]" />
                   <span className="app-nav-label">{tabLabel}</span>

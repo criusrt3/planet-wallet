@@ -29,6 +29,7 @@ import {
 import { fetchMultiChainBalances, sendSepoliaTransfer } from '@/lib/evm'
 import type { TokenBalance } from '@/lib/evm'
 import { executeSepoliaSwap } from '@/lib/swap'
+import { canPerformChainOperations } from '@/lib/shield-guard'
 import {
   createShieldPulse,
   findSimilarAddressWarning,
@@ -421,6 +422,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const current = loadState()
       const active = getActiveWallet(current)
       if (!active) throw new Error('请先创建钱包')
+      const shield = computeShieldLevel(
+        current.completedTasks,
+        current.quizPassed,
+      )
+      if (!canPerformChainOperations(shield)) {
+        throw new Error(
+          '需要紫色护盾及以上才能转账，请先完成「第一次安全签名」或任一实战挑战',
+        )
+      }
       const resolved = getTokenByAssetKey(params.assetKey)
       const poisonWarn = findSimilarAddressWarning(params.to, [
         active.address,
@@ -475,6 +485,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const current = loadState()
       const active = getActiveWallet(current)
       if (!active) throw new Error('请先创建钱包')
+      const shield = computeShieldLevel(
+        current.completedTasks,
+        current.quizPassed,
+      )
+      if (!canPerformChainOperations(shield)) {
+        throw new Error(
+          '需要紫色护盾及以上才能兑换，请先完成「第一次安全签名」或任一实战挑战',
+        )
+      }
       const fromToken = getTokenById(params.fromTokenId)
       const toToken = getTokenById(params.toTokenId)
       if (
