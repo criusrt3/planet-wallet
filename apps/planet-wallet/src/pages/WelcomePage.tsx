@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AiNavigator } from '@/components/AiNavigator'
+import { HomeTasksPanel } from '@/components/HomeTasksPanel'
 import { PlanetVisualization } from '@/components/PlanetVisualization'
 import { getNavigatorMessage } from '@/lib/ai-navigator'
 import { useWallet } from '@/store/WalletContext'
@@ -9,12 +9,13 @@ import { Card, CardContent } from '@repo/ui/components/card'
 
 export function WelcomePage() {
   const navigate = useNavigate()
-  const { wallet, wallets } = useWallet()
+  const { wallets } = useWallet()
+  const hasWallet = wallets.length > 0
   const msg = getNavigatorMessage('welcome')
 
-  useEffect(() => {
-    if (wallets.length > 0) navigate('/planet', { replace: true })
-  }, [wallets.length, navigate])
+  if (hasWallet) {
+    return <HomeTasksPanel />
+  }
 
   return (
     <div className="animate-fade-up space-y-6">
@@ -27,15 +28,13 @@ export function WelcomePage() {
           <p>✦ 操作时可学习，熟悉后可在设置关闭提示</p>
         </CardContent>
       </Card>
-      {wallet ? (
-        <Button size="lg" className="w-full" onClick={() => navigate('/planet')}>
-          进入我的星球
-        </Button>
-      ) : (
-        <Button size="lg" className="w-full" onClick={() => navigate('/create')}>
+        <Button
+          size="lg"
+          className="w-full"
+          onClick={() => navigate('/task/light_planet')}
+        >
           点亮我的钱包星球
         </Button>
-      )}
     </div>
   )
 }

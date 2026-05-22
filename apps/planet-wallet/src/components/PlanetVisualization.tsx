@@ -1,14 +1,15 @@
+/** 经典三卫星公转：标签始终朝向用户（orbit + counter-rotate） */
 const SATELLITES = [
   { label: 'ETH', color: '#627EEA', delay: '0s' },
   { label: '安全', color: '#A78BFA', delay: '-2s' },
   { label: '任务', color: '#32CAFA', delay: '-4s' },
-]
+] as const
 
 export function PlanetVisualization({ pulse }: { pulse?: boolean }) {
   return (
     <div className="relative mx-auto flex h-56 w-full max-w-xs items-center justify-center">
       <div
-        className="absolute inset-0 rounded-full opacity-30 blur-3xl"
+        className="pointer-events-none absolute inset-0 rounded-full opacity-30 blur-3xl"
         style={{
           background:
             'radial-gradient(circle, rgba(44,146,250,0.5) 0%, transparent 70%)',
@@ -36,7 +37,7 @@ export function PlanetVisualization({ pulse }: { pulse?: boolean }) {
         </div>
       ))}
       <div
-        className={`planet-core relative z-10 flex h-24 w-24 items-center justify-center rounded-full bg-primary ${pulse ? '' : ''}`}
+        className={`planet-core relative z-10 flex h-24 w-24 items-center justify-center rounded-full ${pulse ? 'planet-core-pulse' : ''}`}
         style={{
           background:
             'radial-gradient(circle at 30% 30%, #5eb0ff, #007fff 50%, #004c99)',

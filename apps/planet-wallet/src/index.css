@@ -69,6 +69,23 @@
   }
 }
 
+@keyframes orbit-reverse {
+  from {
+    transform: rotate(360deg) translateX(var(--orbit-r)) rotate(-360deg);
+  }
+  to {
+    transform: rotate(0deg) translateX(var(--orbit-r)) rotate(0deg);
+  }
+}
+
+.planet-orbit {
+  animation: orbit var(--orbit-dur, 16s) linear infinite;
+}
+
+.planet-orbit-reverse {
+  animation: orbit-reverse var(--orbit-dur, 20s) linear infinite;
+}
+
 @keyframes pulse-glow {
   0%,
   100% {
@@ -79,9 +96,132 @@
   }
 }
 
+@keyframes nebula-drift {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.05) rotate(3deg);
+  }
+}
+
+@keyframes aurora-pulse {
+  0%,
+  100% {
+    background: radial-gradient(
+      circle,
+      rgba(50, 202, 250, 0.25) 0%,
+      rgba(167, 139, 250, 0.12) 40%,
+      transparent 70%
+    );
+  }
+  50% {
+    background: radial-gradient(
+      circle,
+      rgba(167, 139, 250, 0.3) 0%,
+      rgba(44, 146, 250, 0.15) 45%,
+      transparent 72%
+    );
+  }
+}
+
+@keyframes star-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes comet-fly {
+  0% {
+    transform: rotate(-30deg) translateX(-120px) translateY(40px);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  35% {
+    transform: rotate(-30deg) translateX(100px) translateY(-60px);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes core-shine-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.planet-scene {
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(20, 40, 80, 0.5) 0%,
+    transparent 65%
+  );
+}
+
+.planet-nebula {
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 50%,
+    rgba(44, 146, 250, 0.12) 0%,
+    rgba(167, 139, 250, 0.06) 50%,
+    transparent 75%
+  );
+  animation: nebula-drift 8s ease-in-out infinite;
+}
+
+.planet-aurora {
+  animation: aurora-pulse 5s ease-in-out infinite;
+}
+
+.planet-star {
+  animation: star-twinkle 2.5s ease-in-out infinite;
+}
+
+.planet-comet {
+  width: 48px;
+  height: 2px;
+  margin-left: -24px;
+  margin-top: -1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.9),
+    rgba(50, 202, 250, 0.6)
+  );
+  border-radius: 2px;
+  animation: comet-fly 7s ease-in-out infinite;
+  pointer-events: none;
+}
+
 .planet-core {
   animation: pulse-glow 3s ease-in-out infinite;
 }
+
+.planet-core-shine {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.15) 60deg,
+    transparent 120deg
+  );
+  animation: core-shine-spin 12s linear infinite;
+}
+
+.planet-core-pulse {
+  animation: pulse-glow 1.2s ease-in-out infinite;
+}
+
+/* 卫星公转：由组件内联 animation: orbit … 驱动，勿改 transform 结构 */
 
 @keyframes fadeUp {
   from {

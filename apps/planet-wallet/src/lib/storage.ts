@@ -1,6 +1,8 @@
+import { DEFAULT_ENABLED_CHAIN_IDS } from '@/lib/chains'
+import { normalizeCompletedTasks } from '@/lib/tasks'
 import type { AppState, TaskId, WalletIdentity } from '@/types'
 
-export const STORAGE_KEY = 'planet-wallet-state-v5'
+export const STORAGE_KEY = 'planet-wallet-state-v7'
 export const MAX_WALLETS = 10
 
 export const defaultState: AppState = {
@@ -11,6 +13,7 @@ export const defaultState: AppState = {
   settings: { showLearningHints: true },
   completedTasks: [],
   shieldLevel: 'initial',
+  shieldPulse: null,
   demoSignature: null,
   quizPassed: false,
 }
@@ -29,6 +32,7 @@ function migrateFromLegacy(parsed: Record<string, unknown>): AppState | null {
     nickname: legacyWallet.nickname,
     createdAt: legacyWallet.createdAt,
     chainId: legacyWallet.chainId ?? 11155111,
+    enabledChainIds: [...DEFAULT_ENABLED_CHAIN_IDS],
     hasViewedBackup: Boolean(parsed.hasViewedBackup),
     hasCopiedAddress: Boolean(parsed.hasCopiedAddress),
   }
@@ -37,8 +41,11 @@ function migrateFromLegacy(parsed: Record<string, unknown>): AppState | null {
     ...defaultState,
     wallets: [identity],
     activeWalletId: id,
-    completedTasks: (parsed.completedTasks as TaskId[]) ?? [],
+    completedTasks: normalizeCompletedTasks(
+      (parsed.completedTasks as TaskId[]) ?? [],
+    ),
     shieldLevel: (parsed.shieldLevel as AppState['shieldLevel']) ?? 'initial',
+    shieldPulse: (parsed.shieldPulse as AppState['shieldPulse']) ?? null,
     demoSignature: (parsed.demoSignature as string | null) ?? null,
     quizPassed: Boolean(parsed.quizPassed),
     settings: {
@@ -62,11 +69,22 @@ function parseStoredState(parsed: Record<string, unknown>): AppState | null {
   if (!Array.isArray(parsed.wallets)) return null
   const state = { ...defaultState, ...parsed } as AppState
   if (!Array.isArray(state.txHistory)) state.txHistory = []
+  state.completedTasks = normalizeCompletedTasks(state.completedTasks ?? [])
+  if (state.shieldPulse === undefined) state.shieldPulse = null
+  state.wallets = state.wallets.map((w) => ({
+    ...w,
+    note: typeof w.note === 'string' ? w.note : '',
+    enabledChainIds:
+      Array.isArray(w.enabledChainIds) && w.enabledChainIds.length > 0
+        ? w.enabledChainIds
+        : [...DEFAULT_ENABLED_CHAIN_IDS],
+  }))
   return state
 }
 
 const STORAGE_KEYS = [
   STORAGE_KEY,
+  'planet-wallet-state-v5',
   'planet-wallet-state-v4',
   'planet-wallet-state-v3',
   'planet-wallet-state-v2',
@@ -136,10 +154,28 @@ export const TASK_META: Record<
     route: '/sign',
     reviewLabel: '再次练习签名',
   },
-  shield_quiz: {
-    title: '开启护盾',
-    description: '完成安全知识问答',
-    route: '/sign',
-    reviewLabel: '复习安全问答',
+  danger_approve: {
+    title: '危险授权挑战',
+    description: '区分「登录」与「无限 Approve」',
+    route: '/challenge/danger_approve',
+    reviewLabel: '再练授权识别',
+  },
+  fake_airdrop: {
+    title: '假空投识别',
+    description: '找出索要助记词的钓鱼页面',
+    route: '/challenge/fake_airdrop',
+    reviewLabel: '再练钓鱼识别',
+  },
+  address_poison: {
+    title: '地址投毒侦探',
+    description: '对比相似地址，防止复制错误',
+    route: '/challenge/address_poison',
+    reviewLabel: '再练地址核对',
+  },
+  security_passport: {
+    title: '生成安全护照',
+    description: '完成总结问答，领取链上护照',
+    route: '/passport',
+    reviewLabel: '查看护照',
   },
 }

@@ -5,7 +5,10 @@ export type TaskId =
   | 'save_key'
   | 'know_address'
   | 'first_sign'
-  | 'shield_quiz'
+  | 'danger_approve'
+  | 'fake_airdrop'
+  | 'address_poison'
+  | 'security_passport'
 
 export type SignActionType =
   | 'personal_sign'
@@ -24,6 +27,7 @@ export type OperationScene =
   | 'approve'
   | 'address_book_add'
   | 'address_book_use'
+  | 'security_scan'
 
 export type RiskLevel = 'info' | 'warning' | 'danger' | 'block'
 
@@ -33,8 +37,12 @@ export interface WalletIdentity {
   keystoreJson: string
   walletPassword: string
   nickname: string
+  /** 用户自定义备注（仅本地） */
+  note?: string
   createdAt: string
   chainId: number
+  /** 要在资产列表中展示余额的测试链 */
+  enabledChainIds: string[]
   hasViewedBackup: boolean
   hasCopiedAddress: boolean
 }
@@ -53,7 +61,11 @@ export interface AppSettings {
 }
 
 export interface TokenBalanceView {
+  /** chainId:tokenId */
   id: string
+  chainId: string
+  chainName: string
+  tokenId: string
   symbol: string
   name: string
   formatted: string
@@ -81,6 +93,13 @@ export interface TxHistoryEntry {
   createdAt: string
 }
 
+export interface ShieldPulse {
+  level: RiskLevel
+  message: string
+  skillRef?: string
+  at: number
+}
+
 export interface AppState {
   wallets: WalletIdentity[]
   activeWalletId: string | null
@@ -89,6 +108,8 @@ export interface AppState {
   settings: AppSettings
   completedTasks: TaskId[]
   shieldLevel: ShieldLevel
+  /** 最近一次护盾实时反馈（教育 + 拦截提示） */
+  shieldPulse: ShieldPulse | null
   demoSignature: string | null
   quizPassed: boolean
 }
@@ -101,6 +122,8 @@ export interface SignAnalysis {
   detail: string
   canProceed: boolean
   irreversible: boolean
+  /** 对齐 Security Skill 的规则说明 */
+  skillRef?: string
 }
 
 export interface NavigatorMessage {

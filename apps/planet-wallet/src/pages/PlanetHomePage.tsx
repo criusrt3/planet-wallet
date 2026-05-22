@@ -1,30 +1,28 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Copy, ExternalLink, History, RefreshCw, Send } from 'lucide-react'
-import { AiNavigator } from '@/components/AiNavigator'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import {
+  Copy,
+  ExternalLink,
+  History,
+  Layers,
+  RefreshCw,
+  Send,
+  Shield,
+} from 'lucide-react'
 import { PlanetVisualization } from '@/components/PlanetVisualization'
-import { ShieldBadge } from '@/components/ShieldBadge'
-import { TaskList } from '@/components/TaskList'
 import { WalletSwitcher } from '@/components/WalletSwitcher'
 import {
   explorerAddressUrl,
   FAUCET_LINKS,
-  SEPOLIA_CHAIN_ID,
+  getChainById,
 } from '@/lib/chains'
-import { getNavigatorMessage } from '@/lib/ai-navigator'
-import { revealMnemonic, shortenAddress } from '@/lib/wallet'
+import { shortenAddress } from '@/lib/wallet'
 import { useWallet } from '@/store/WalletContext'
+import type { TokenBalanceView } from '@/types'
 import { Button } from '@repo/ui/components/button'
 import { AssetRow } from '@repo/ui/components/asset-row'
 import { Badge } from '@repo/ui/components/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@repo/ui/components/dialog'
-import { Alert, AlertDescription } from '@repo/ui/components/alert'
 import { Skeleton } from '@repo/ui/components/skeleton'
 
 function TokenAvatar({ symbol, color }: { symbol: string; color: string }) {
@@ -38,36 +36,32 @@ function TokenAvatar({ symbol, color }: { symbol: string; color: string }) {
   )
 }
 
+function groupByChain(balances: TokenBalanceView[]) {
+  const map = new Map<string, TokenBalanceView[]>()
+  for (const b of balances) {
+    const list = map.get(b.chainId) ?? []
+    list.push(b)
+    map.set(b.chainId, list)
+  }
+  return [...map.entries()].map(([chainId, items]) => ({
+    chainId,
+    chainName: items[0]?.chainName ?? chainId,
+    items,
+  }))
+}
+
 export function PlanetHomePage() {
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const {
-    wallet,
-    shieldLevel,
-    completedTasks,
-    navigatorText,
-    balances,
-    balancesLoading,
-    refreshBalances,
-    markBackupViewed,
-    markAddressCopied,
-  } = useWallet()
-  const [showBackup, setShowBackup] = useState(false)
-  const [mnemonic, setMnemonic] = useState<string | null>(null)
-  const [backupLoading, setBackupLoading] = useState(false)
+  const { wallet, balances, balancesLoading, refreshBalances, markAddressCopied } =
+    useWallet()
   const [copied, setCopied] = useState(false)
+
+  const chainGroups = useMemo(() => groupByChain(balances), [balances])
+  const enabledChainIds = wallet?.enabledChainIds ?? ['sepolia']
 
   useEffect(() => {
     if (!wallet) navigate('/create')
   }, [wallet, navigate])
-
-  useEffect(() => {
-    if (searchParams.get('openBackup') === '1' && wallet) {
-      void openBackup()
-      setSearchParams({}, { replace: true })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅响应 URL 参数
-  }, [searchParams.get('openBackup'), wallet?.id])
 
   if (!wallet) return null
 
@@ -78,58 +72,53 @@ export function PlanetHomePage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  async function openBackup() {
-    setShowBackup(true)
-    markBackupViewed()
-    setBackupLoading(true)
-    try {
-      const phrase = await revealMnemonic(
-        wallet!.keystoreJson,
-        wallet!.walletPassword,
-      )
-      setMnemonic(phrase)
-    } catch {
-      setMnemonic('导出失败，请重置 Demo 后重试')
-    } finally {
-      setBackupLoading(false)
-    }
-  }
-
-  const allDone = completedTasks.length >= 5
-  const ethBalance = balances.find((b) => b.id === 'eth')
+  const ethBalance = balances.find(
+    (b) => b.chainId === 'sepolia' && b.tokenId === 'eth',
+  )
 
   return (
     <div className="space-y-4 animate-fade-up">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <WalletSwitcher />
-        <div className="flex gap-2">
-          <Badge variant="primary">Sepolia</Badge>
-          <Badge variant="neutral">ID {SEPOLIA_CHAIN_ID}</Badge>
+        <div className="flex flex-wrap gap-2">
+          {enabledChainIds.map((id) => {
+            const c = getChainById(id)
+            return (
+              <Badge key={id} variant="primary" className="text-[10px]">
+                {c?.shortName ?? id}
+              </Badge>
+            )
+          })}
         </div>
       </div>
 
       <PlanetVisualization />
       <div className="text-center">
         <p className="text-title-sm font-bold">{wallet.nickname}</p>
+        {wallet.note ? (
+          <p className="text-xs text-muted-foreground mt-0.5 max-w-xs mx-auto">
+            {wallet.note}
+          </p>
+        ) : null}
         <button
           type="button"
-          onClick={handleCopy}
+          onClick={() => handleCopy()}
           className="mt-1 inline-flex items-center gap-1 font-mono text-sm text-primary hover:underline"
           title={wallet.address}
         >
-          {wallet.address}
+          {shortenAddress(wallet.address, 10)}
           <Copy className="h-3.5 w-3.5 shrink-0" />
         </button>
         {copied && (
           <p className="text-xs text-success-text mt-1">已复制完整地址</p>
         )}
         <a
-          href={explorerAddressUrl(wallet.address)}
+          href={explorerAddressUrl('sepolia', wallet.address)}
           target="_blank"
           rel="noreferrer"
           className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
         >
-          在 Etherscan 查看
+          在 Sepolia 浏览器查看
           <ExternalLink className="h-3 w-3" />
         </a>
       </div>
@@ -137,35 +126,71 @@ export function PlanetHomePage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-base">我的资产</CardTitle>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => void refreshBalances()}
-            disabled={balancesLoading}
-            aria-label="刷新余额"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${balancesLoading ? 'animate-spin' : ''}`}
-            />
-          </Button>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="icon-sm" asChild>
+              <Link to="/assets" aria-label="管理多链资产">
+                <Layers className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => void refreshBalances()}
+              disabled={balancesLoading}
+              aria-label="刷新余额"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${balancesLoading ? 'animate-spin' : ''}`}
+              />
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="divide-y divide-border p-0">
+        <CardContent className="p-0">
           {balancesLoading && balances.length === 0 ? (
             <div className="space-y-3 p-4">
               <Skeleton className="h-14 w-full" />
               <Skeleton className="h-14 w-full" />
             </div>
+          ) : chainGroups.length === 0 ? (
+            <p className="p-4 text-sm text-muted-foreground text-center">
+              尚未添加任何链，
+              <Link to="/assets" className="text-primary hover:underline">
+                去添加多链资产
+              </Link>
+            </p>
           ) : (
-            balances.map((b) => (
-              <AssetRow
-                key={b.id}
-                avatar={<TokenAvatar symbol={b.symbol} color={b.color} />}
-                symbol={b.symbol}
-                amount={b.name}
-                value={`${Number.parseFloat(b.formatted).toLocaleString(undefined, { maximumFractionDigits: 6 })}`}
-                detail={b.isNative ? '原生 gas' : 'ERC-20'}
-              />
-            ))
+            chainGroups.map((group) => {
+              const chain = getChainById(group.chainId)
+              return (
+                <div
+                  key={group.chainId}
+                  className="border-t border-border first:border-t-0"
+                >
+                  <div className="flex items-center justify-between px-4 py-2 bg-muted/40">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {group.chainName}
+                    </span>
+                    <Badge variant="neutral" className="text-[10px]">
+                      {chain?.chainId}
+                    </Badge>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {group.items.map((b) => (
+                      <AssetRow
+                        key={b.id}
+                        avatar={
+                          <TokenAvatar symbol={b.symbol} color={b.color} />
+                        }
+                        symbol={b.symbol}
+                        amount={b.name}
+                        value={`${Number.parseFloat(b.formatted).toLocaleString(undefined, { maximumFractionDigits: 6 })}`}
+                        detail={b.isNative ? '原生 gas' : 'ERC-20'}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )
+            })
           )}
         </CardContent>
       </Card>
@@ -174,7 +199,7 @@ export function PlanetHomePage() {
         <Card className="border-warning-border bg-warning-surface">
           <CardContent className="p-4 space-y-2">
             <p className="text-sm font-medium text-warning-text">
-              余额不足？先领取测试币
+              Sepolia 余额不足？先领取测试币
             </p>
             <ul className="text-xs space-y-1">
               {FAUCET_LINKS.map((f) => (
@@ -206,10 +231,20 @@ export function PlanetHomePage() {
         </Button>
       </div>
 
-      <ShieldBadge level={shieldLevel} />
-      <AiNavigator message={navigatorText} compact />
+      <Button variant="outline" size="sm" className="w-full" asChild>
+        <Link to="/assets">
+          <Layers className="mr-2 h-4 w-4" />
+          添加 / 管理多链资产
+        </Link>
+      </Button>
 
       <div className="flex gap-2 text-xs">
+        <Button variant="outline" size="sm" className="flex-1" asChild>
+          <Link to="/security">
+            <Shield className="mr-1 h-3.5 w-3.5 inline" />
+            安全监测
+          </Link>
+        </Button>
         <Button variant="outline" size="sm" className="flex-1" asChild>
           <Link to="/sign">签名教学</Link>
         </Button>
@@ -224,48 +259,9 @@ export function PlanetHomePage() {
         </Button>
       </div>
 
-      <section>
-        <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
-          新手任务 · {completedTasks.length}/5
-        </h3>
-        <TaskList
-          completed={completedTasks}
-          onBackup={openBackup}
-          onCopyAddress={handleCopy}
-        />
-      </section>
-
-      {allDone && (
-        <Button className="w-full" onClick={() => navigate('/passport')}>
-          领取 10 周年护照
-        </Button>
-      )}
-
-      <Dialog open={showBackup} onOpenChange={setShowBackup}>
-        <DialogContent className="max-h-[85vh] overflow-auto">
-          <DialogHeader>
-            <DialogTitle className="text-warning-text">
-              星球钥匙 · 请手写备份
-            </DialogTitle>
-          </DialogHeader>
-          <AiNavigator message={getNavigatorMessage('backup').text} compact />
-          {backupLoading ? (
-            <p className="text-sm text-muted-foreground">正在解密助记词…</p>
-          ) : (
-            <p className="rounded-lg bg-muted p-3 font-mono text-xs leading-relaxed break-words">
-              {mnemonic}
-            </p>
-          )}
-          <Alert variant="destructive">
-            <AlertDescription>
-              仅用于 Sepolia 测试网体验，请勿向此地址转入主网资产。
-            </AlertDescription>
-          </Alert>
-          <Button className="w-full" onClick={() => setShowBackup(false)}>
-            我已抄写保存
-          </Button>
-        </DialogContent>
-      </Dialog>
+      <p className="text-center text-xs text-muted-foreground">
+        新手任务请到底部「任务」页完成
+      </p>
     </div>
   )
 }

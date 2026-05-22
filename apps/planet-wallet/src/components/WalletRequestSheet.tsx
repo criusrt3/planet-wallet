@@ -1,4 +1,5 @@
 import { Globe, Loader2 } from 'lucide-react'
+import { WalletBackdrop } from '@/components/task-sheets/WalletBackdrop'
 import { SignTranslator } from '@/components/SignTranslator'
 import type { SignAnalysis } from '@/types'
 import type { TutorialRequestField } from '@/lib/tutorial-requests'
@@ -78,8 +79,10 @@ export function WalletRequestSheet({
     analysis.actionType === 'eth_sendTransaction'
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[92vh] rounded-t-2xl px-0 pb-8">
+    <>
+      <WalletBackdrop visible={open} />
+      <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="z-50 max-h-[92vh] rounded-t-2xl px-0 pb-8">
         <SheetHeader className="border-b border-border px-4 pb-3 text-left">
           <div className="flex items-start gap-3">
             <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -145,5 +148,6 @@ export function WalletRequestSheet({
         </SheetFooter>
       </SheetContent>
     </Sheet>
+    </>
   )
 }

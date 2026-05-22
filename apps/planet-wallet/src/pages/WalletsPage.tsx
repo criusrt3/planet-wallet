@@ -48,7 +48,12 @@ export function WalletsPage() {
                     <Badge variant="primary">当前</Badge>
                   )}
                 </div>
-                <p className="font-mono text-xs text-muted-foreground mt-1">
+                {w.note ? (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                    {w.note}
+                  </p>
+                ) : null}
+                <p className="font-mono text-xs text-muted-foreground mt-0.5">
                   {shortenAddress(w.address, 8)}
                 </p>
               </button>
@@ -80,6 +85,9 @@ export function WalletsPage() {
         </p>
       )}
 
+      <Button variant="outline" size="sm" className="w-full" asChild>
+        <Link to="/settings">在设置中编辑名称与备注</Link>
+      </Button>
       <Button variant="ghost" size="sm" asChild>
         <Link to="/planet">返回钱包</Link>
       </Button>

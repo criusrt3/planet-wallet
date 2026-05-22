@@ -1,15 +1,13 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { CheckCircle2, FileSignature, Shield, Send } from 'lucide-react'
 import { AiNavigator } from '@/components/AiNavigator'
 import { OperationLearning } from '@/components/OperationLearning'
+import { TaskReplayShell } from '@/components/TaskReplayShell'
 import { WalletRequestSheet } from '@/components/WalletRequestSheet'
 import { getNavigatorMessage } from '@/lib/ai-navigator'
-import {
-  analyzeSignRequest,
-  getDemoSignAnalysis,
-  QUIZ_QUESTIONS,
-} from '@/lib/security'
+import { analyzeSignRequest, getDemoSignAnalysis } from '@/lib/security'
+import { nextTaskId } from '@/lib/tasks'
 import {
   TUTORIAL_DAPP,
   buildTutorialApproveFields,
@@ -20,8 +18,6 @@ import { useWallet } from '@/store/WalletContext'
 import { Button } from '@repo/ui/components/button'
 import { Card, CardContent } from '@repo/ui/components/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/tabs'
-import { Label } from '@repo/ui/components/label'
-import { RadioGroup, RadioGroupItem } from '@repo/ui/components/radio-group'
 import { toast } from '@repo/ui/components/toast'
 import type { SignActionType } from '@/types'
 
@@ -47,21 +43,44 @@ const TAB_SHEET_TITLE: Record<DemoTab, string> = {
 
 export function SignTutorialPage() {
   const navigate = useNavigate()
-  const { wallet, runDemoSign, demoSignature, submitQuiz, quizPassed } =
-    useWallet()
+  const [searchParams] = useSearchParams()
+  const autoSheet = searchParams.get('autoSheet') as DemoTab | null
+  const {
+    wallet,
+    runDemoSign,
+    demoSignature,
+    completedTasks,
+    emitShieldPulse,
+    completeTask,
+  } = useWallet()
   const [signing, setSigning] = useState(false)
-  const [tab, setTab] = useState<DemoTab>('sign')
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [demoApproveDone, setDemoApproveDone] = useState(false)
-  const [demoTxDone, setDemoTxDone] = useState(false)
-  const [quizAnswers, setQuizAnswers] = useState<number[]>(
-    QUIZ_QUESTIONS.map(() => -1),
+  const [tab, setTab] = useState<DemoTab>(
+    autoSheet === 'approve' || autoSheet === 'tx' ? autoSheet : 'sign',
   )
-  const [quizError, setQuizError] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [session, setSession] = useState(0)
+
+  const taskDone = completedTasks.includes('first_sign')
 
   const actionType = TAB_ACTION[tab]
-  const analysis =
-    tab === 'sign' ? getDemoSignAnalysis() : analyzeSignRequest(actionType)
+  const analysis = useMemo(() => {
+    if (tab === 'sign') return getDemoSignAnalysis()
+    const base = analyzeSignRequest(actionType)
+    if (tab === 'approve') {
+      return {
+        ...base,
+        riskLevel: 'danger' as const,
+        canProceed: false,
+        aiTranslation:
+          '这是高风险授权：对方请求「无限制」使用你的 USDT。Security Skill 建议拒绝或改为精确额度。',
+        detail:
+          '无限 Approve 后合约可随时转走代币。教学演示中确认按钮已禁用，真实场景也应优先拒绝。',
+      }
+    }
+    return base
+  }, [tab, actionType])
+
+  const nextChallenge = nextTaskId(completedTasks)
 
   const requestFields = useMemo(() => {
     if (!wallet) return []
@@ -75,9 +94,29 @@ export function SignTutorialPage() {
     }
   }, [tab, wallet])
 
+  useEffect(() => {
+    if (autoSheet && ['sign', 'approve', 'tx'].includes(autoSheet)) {
+      setTab(autoSheet)
+      const t = setTimeout(() => setSheetOpen(true), 400)
+      return () => clearTimeout(t)
+    }
+  }, [autoSheet, session])
+
   if (!wallet) {
     navigate('/create')
     return null
+  }
+
+  function openSheet() {
+    if (tab === 'approve') {
+      emitShieldPulse({
+        level: 'danger',
+        message: '红色拦截建议：检测到无限额度授权请求，建议拒绝。',
+        skillRef: 'Skill §2.2 · 无限 Approve',
+        at: Date.now(),
+      })
+    }
+    setSheetOpen(true)
   }
 
   async function handleSheetConfirm() {
@@ -85,6 +124,7 @@ export function SignTutorialPage() {
       setSigning(true)
       try {
         await runDemoSign()
+        if (!taskDone) completeTask('first_sign')
         setSheetOpen(false)
         toast.success('签名已完成', {
           description: '这是一次真实的 Demo 消息签名（不上链、不花 Gas）',
@@ -99,32 +139,23 @@ export function SignTutorialPage() {
     }
 
     setSheetOpen(false)
-    if (tab === 'approve') {
-      setDemoApproveDone(true)
-      toast.success('已模拟完成授权确认', {
-        description: '教学演示未广播交易。真实场景请核对额度后再点确认。',
-      })
-    } else {
-      setDemoTxDone(true)
-      toast.success('已模拟完成转账确认', {
-        description: '教学演示未广播交易。真实转账请在「转账」页操作。',
-      })
-    }
+    toast.success('已拒绝 / 关闭演示', {
+      description: '教学演示未广播交易。高风险授权请勿确认。',
+    })
   }
 
-  function handleQuizSubmit() {
-    const ok = submitQuiz(quizAnswers)
-    setQuizError(!ok)
-    if (ok) navigate('/passport')
+  function replay() {
+    setSession((s) => s + 1)
+    setSheetOpen(false)
+    setTimeout(() => setSheetOpen(true), 300)
   }
-
-  const tabDone =
-    (tab === 'sign' && !!demoSignature) ||
-    (tab === 'approve' && demoApproveDone) ||
-    (tab === 'tx' && demoTxDone)
 
   return (
-    <div className="space-y-4 animate-fade-up">
+    <TaskReplayShell
+      title="第一次安全签名"
+      done={taskDone}
+      onReplay={replay}
+    >
       <OperationLearning scene="sign" actionType={actionType} compact />
 
       <Tabs
@@ -157,27 +188,20 @@ export function SignTutorialPage() {
                   <p className="text-xs text-muted-foreground">待处理请求</p>
                   <p className="text-sm font-semibold">{TAB_SHEET_TITLE[tab]}</p>
                 </div>
-                {tabDone && (
+                {tab === 'sign' && demoSignature && (
                   <span className="inline-flex items-center gap-1 text-xs text-success-text">
                     <CheckCircle2 className="size-3.5" />
-                    已确认
+                    已签过
                   </span>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
                 来自 <span className="font-medium text-foreground">{TUTORIAL_DAPP.name}</span>
-                ，与连接 dApp 后弹出的钱包确认窗一致。请先查看完整字段，再点「拒绝」或「确认」。
+                ，与连接 dApp 后从底部滑出的钱包确认窗一致。
               </p>
-              {!tabDone && (
-                <Button
-                  size="lg"
-                  className="w-full"
-                  variant={tab === 'sign' ? 'default' : 'secondary'}
-                  onClick={() => setSheetOpen(true)}
-                >
-                  查看请求并确认
-                </Button>
-              )}
+              <Button size="lg" className="w-full" onClick={openSheet}>
+                打开钱包确认弹窗
+              </Button>
             </CardContent>
           </Card>
 
@@ -195,32 +219,11 @@ export function SignTutorialPage() {
               </CardContent>
             </Card>
           )}
-
-          {tab === 'approve' && demoApproveDone && (
-            <Card>
-              <CardContent className="p-3">
-                <AiNavigator
-                  message="你已练习过「无限额度授权」的确认流程。真实场景中，这类请求建议拒绝或改为精确额度。"
-                  compact
-                />
-              </CardContent>
-            </Card>
-          )}
-
-          {tab === 'tx' && demoTxDone && (
-            <Card>
-              <CardContent className="p-3">
-                <AiNavigator
-                  message="转账前请逐项核对收款地址与金额。测试网真实转账请使用底部「转账」入口。"
-                  compact
-                />
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
       </Tabs>
 
       <WalletRequestSheet
+        key={session}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         title={TAB_SHEET_TITLE[tab]}
@@ -234,53 +237,18 @@ export function SignTutorialPage() {
         onConfirm={handleSheetConfirm}
       />
 
-      <Card>
-        <CardContent className="p-4 space-y-4">
-          <h3 className="text-sm font-semibold">
-            {quizPassed ? '护盾问答已完成' : '开启护盾 · 安全问答'}
-          </h3>
-          {!quizPassed &&
-            QUIZ_QUESTIONS.map((q, qi) => (
-              <div key={q.id}>
-                <p className="text-sm mb-2">{q.question}</p>
-                <RadioGroup
-                  value={
-                    (quizAnswers[qi] ?? -1) >= 0 ? String(quizAnswers[qi]) : ''
-                  }
-                  onValueChange={(v) => {
-                    const next = [...quizAnswers]
-                    next[qi] = Number(v)
-                    setQuizAnswers(next)
-                  }}
-                >
-                  {q.options.map((opt, oi) => (
-                    <div key={opt} className="flex items-center gap-2">
-                      <RadioGroupItem value={String(oi)} id={`${q.id}-${oi}`} />
-                      <Label htmlFor={`${q.id}-${oi}`} className="text-xs">
-                        {opt}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-            ))}
-          {!quizPassed && (
-            <>
-              {quizError && (
-                <p className="text-xs text-destructive">
-                  还有题目答错了，再想想～
-                </p>
-              )}
-              <Button
-                disabled={quizAnswers.some((a) => a < 0)}
-                onClick={handleQuizSubmit}
-              >
-                提交并升级护盾
-              </Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+      {nextChallenge &&
+        nextChallenge !== 'first_sign' &&
+        nextChallenge !== 'security_passport' && (
+          <Button variant="outline" className="w-full" asChild>
+            <Link to={`/challenge/${nextChallenge}`}>继续实战任务 →</Link>
+          </Button>
+        )}
+      {nextChallenge === 'security_passport' && (
+        <Button variant="outline" className="w-full" asChild>
+          <Link to="/passport?openQuiz=1">前往生成安全护照 →</Link>
+        </Button>
+      )}
+    </TaskReplayShell>
   )
 }

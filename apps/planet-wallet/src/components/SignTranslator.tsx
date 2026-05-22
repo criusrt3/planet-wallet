@@ -48,6 +48,16 @@ export function SignTranslator({ analysis }: { analysis: SignAnalysis }) {
           此类型操作可能无法撤回，请谨慎确认。
         </p>
       )}
+      {analysis.skillRef && (
+        <p className="text-[10px] text-muted-foreground border-t border-border/60 pt-2">
+          Security Skill · {analysis.skillRef}
+        </p>
+      )}
+      {!analysis.canProceed && (
+        <p className="text-xs font-medium text-destructive">
+          建议拒绝本次操作，查证后再决定。
+        </p>
+      )}
     </div>
   )
 }

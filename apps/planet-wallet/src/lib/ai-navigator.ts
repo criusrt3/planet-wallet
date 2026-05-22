@@ -1,3 +1,4 @@
+import { countCompleted, normalizeCompletedTasks } from '@/lib/tasks'
 import type { NavigatorMessage, ShieldLevel, TaskId } from '@/types'
 
 const SCENES: Record<string, string | ((ctx?: Record<string, string>) => string)> = {
@@ -14,8 +15,11 @@ const SCENES: Record<string, string | ((ctx?: Record<string, string>) => string)
   sign_intro:
     '这次操作只是登录式身份确认，不会转走资产，也不会花 Gas。',
   sign_done: '很好！你已经完成第一次安全签名体验。',
-  quiz_intro: '最后几道小题，帮你巩固护盾意识。',
-  quiz_done: '护盾已升级！你可以领取 10 周年链上护照了。',
+  quiz_intro: '完成实战挑战后，在护照页答题领取安全护照。',
+  quiz_done: '护盾已满级！安全护照已生成。',
+  challenge_approve: '授权不是登录。无限 Approve 可能让合约长期动用你的代币。',
+  challenge_airdrop: '空投不会索要助记词。索要 12 个词的一律是钓鱼。',
+  challenge_poison: '不要只看地址前后几位，大额转账请核对完整 0x 或走地址簿。',
   passport: '恭喜完成新手冒险！这张护照可以截图分享你的里程碑。',
   high_risk:
     '这个合约想获得长期支配权限，建议拒绝。若不确定，先退出再查证。',
@@ -40,19 +44,35 @@ export function getTaskHint(taskId: TaskId, completed: boolean): string {
     light_planet: '点击创建钱包',
     save_key: '在首页查看备份提醒',
     know_address: '复制你的地址',
-    first_sign: '前往签名教学页',
-    shield_quiz: '完成安全问答',
+    first_sign: '前往签名教学 · 签名翻译器',
+    danger_approve: '实战：危险授权挑战',
+    fake_airdrop: '实战：假空投识别',
+    address_poison: '实战：地址投毒侦探',
+    security_passport: '护照页 · 安全问答',
   }
-  return hints[taskId]
+  return hints[taskId] ?? '开始任务'
 }
 
 export function computeShieldLevel(
   completedTasks: TaskId[],
   quizPassed: boolean,
 ): ShieldLevel {
-  if (quizPassed && completedTasks.includes('shield_quiz')) return 'gold'
-  if (completedTasks.includes('first_sign')) return 'purple'
-  if (completedTasks.includes('save_key')) return 'blue'
+  const done = normalizeCompletedTasks(completedTasks)
+  if (
+    quizPassed &&
+    done.includes('security_passport') &&
+    countCompleted(done) >= 8
+  ) {
+    return 'gold'
+  }
+  if (done.includes('address_poison') || done.includes('fake_airdrop')) {
+    return 'purple'
+  }
+  if (done.includes('first_sign') || done.includes('danger_approve')) {
+    return 'purple'
+  }
+  if (done.includes('save_key') || done.includes('know_address')) return 'blue'
+  if (done.includes('light_planet')) return 'blue'
   return 'initial'
 }
 

@@ -17,10 +17,23 @@ import {
   cancelSensitiveAction,
   confirmSensitiveAction,
 } from '@/lib/confirm-action'
-import { SEPOLIA_CHAIN_ID } from '@/lib/chains'
-import { getTokenById } from '@/lib/chains'
-import { fetchTokenBalances, sendSepoliaTransfer } from '@/lib/evm'
+import {
+  assetKey,
+  DEFAULT_ENABLED_CHAIN_IDS,
+  explorerAddressUrl,
+  getChainById,
+  getTokenByAssetKey,
+  getTokenById,
+  SEPOLIA_CHAIN_ID,
+} from '@/lib/chains'
+import { fetchMultiChainBalances, sendSepoliaTransfer } from '@/lib/evm'
+import type { TokenBalance } from '@/lib/evm'
 import { executeSepoliaSwap } from '@/lib/swap'
+import {
+  createShieldPulse,
+  findSimilarAddressWarning,
+  type ShieldPulse,
+} from '@/lib/shield-monitor'
 import { QUIZ_QUESTIONS } from '@/lib/security'
 import {
   defaultState,
@@ -54,15 +67,23 @@ interface WalletContextValue extends AppState {
   lastTxHash: string | null
   canCreateWallet: boolean
   completeTask: (id: TaskId) => void
+  emitShieldPulse: (pulse: ShieldPulse) => void
+  warnScreenshotAttempt: () => void
+  checkTransferRecipient: (to: string) => string | null
   createWallet: () => Promise<WalletIdentity>
   switchWallet: (id: string) => void
   removeWallet: (id: string) => Promise<void>
   markBackupViewed: () => void
   markAddressCopied: () => void
+  updateWalletProfile: (
+    walletId: string,
+    profile: { nickname: string; note?: string },
+  ) => void
   refreshBalances: () => Promise<void>
+  setWalletChainEnabled: (chainId: string, enabled: boolean) => void
   runDemoSign: () => Promise<string>
   sendTransfer: (params: {
-    tokenId: string
+    assetKey: string
     to: string
     amount: string
   }) => Promise<string>
@@ -87,11 +108,19 @@ function syncShield(state: AppState): ShieldLevel {
 }
 
 function markTask(state: AppState, id: TaskId): AppState {
-  const completed = state.completedTasks.includes(id)
+  const already = state.completedTasks.includes(id)
+  const completed = already
     ? state.completedTasks
     : [...state.completedTasks, id]
-  const next = { ...state, completedTasks: completed }
-  return { ...next, shieldLevel: syncShield(next) }
+  let next: AppState = { ...state, completedTasks: completed }
+  next = { ...next, shieldLevel: syncShield(next) }
+  if (!already) {
+    next = {
+      ...next,
+      shieldPulse: createShieldPulse('task_level_up'),
+    }
+  }
+  return next
 }
 
 function updateWallet(
@@ -122,11 +151,12 @@ function appendHistory(
   }
 }
 
-function mapBalances(
-  rows: Awaited<ReturnType<typeof fetchTokenBalances>>,
-): TokenBalanceView[] {
+function mapBalances(rows: TokenBalance[]): TokenBalanceView[] {
   return rows.map((r) => ({
-    id: r.token.id,
+    id: assetKey(r.chainId, r.token.id),
+    chainId: r.chainId,
+    chainName: r.chainName,
+    tokenId: r.token.id,
     symbol: r.token.symbol,
     name: r.token.name,
     formatted: r.formatted,
@@ -158,7 +188,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (!active) return
     setBalancesLoading(true)
     try {
-      const rows = await fetchTokenBalances(active.address as Address)
+      const rows = await fetchMultiChainBalances(
+        active.address as Address,
+        active.enabledChainIds,
+      )
       setBalances(mapBalances(rows))
     } finally {
       setBalancesLoading(false)
@@ -171,7 +204,26 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } else {
       setBalances([])
     }
-  }, [wallet?.id, wallet?.address, refreshBalances])
+  }, [wallet?.id, wallet?.address, wallet?.enabledChainIds?.join(','), refreshBalances])
+
+  const setWalletChainEnabled = useCallback(
+    (chainId: string, enabled: boolean) => {
+      if (!wallet) return
+      if (!getChainById(chainId)) return
+      persist((prev) => {
+        const w = prev.wallets.find((x) => x.id === wallet.id)
+        if (!w) return prev
+        let ids = [...(w.enabledChainIds ?? [...DEFAULT_ENABLED_CHAIN_IDS])]
+        if (enabled && !ids.includes(chainId)) ids.push(chainId)
+        if (!enabled) {
+          ids = ids.filter((c) => c !== chainId)
+          if (ids.length === 0) ids = [...DEFAULT_ENABLED_CHAIN_IDS]
+        }
+        return updateWallet(prev, wallet.id, { enabledChainIds: ids })
+      })
+    },
+    [persist, wallet],
+  )
 
   const switchWallet = useCallback(
     (id: string) => {
@@ -194,8 +246,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       keystoreJson,
       walletPassword,
       nickname: generateNickname(),
+      note: undefined,
       createdAt: new Date().toISOString(),
       chainId: chainId ?? SEPOLIA_CHAIN_ID,
+      enabledChainIds: [...DEFAULT_ENABLED_CHAIN_IDS],
       hasViewedBackup: false,
       hasCopiedAddress: false,
     }
@@ -215,7 +269,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         title: '创建身份钱包',
         summary: `地址 ${identity.address.slice(0, 10)}…`,
         hash: '',
-        explorerUrl: `https://sepolia.etherscan.io/address/${identity.address}`,
+        explorerUrl: explorerAddressUrl('sepolia', identity.address),
       })
       return next
     })
@@ -252,11 +306,43 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [persist],
   )
 
+  const emitShieldPulse = useCallback(
+    (pulse: ShieldPulse) => {
+      persist((prev) => ({ ...prev, shieldPulse: pulse }))
+    },
+    [persist],
+  )
+
+  const warnScreenshotAttempt = useCallback(() => {
+    emitShieldPulse(createShieldPulse('screenshot_warn'))
+  }, [emitShieldPulse])
+
+  const checkTransferRecipient = useCallback(
+    (to: string): string | null => {
+      if (!wallet) return null
+      const refs = [
+        wallet.address,
+        ...state.addressBook.map((e) => e.address),
+        ...state.txHistory
+          .filter((h) => h.type === 'transfer')
+          .map((h) => h.summary)
+          .filter((s) => s.includes('0x')),
+      ]
+      const warn = findSimilarAddressWarning(to, refs)
+      if (warn) {
+        emitShieldPulse(createShieldPulse('similar_address'))
+      }
+      return warn
+    },
+    [wallet, state.addressBook, state.txHistory, emitShieldPulse],
+  )
+
   const markBackupViewed = useCallback(() => {
     if (!wallet) return
     persist((prev) => {
       let next = updateWallet(prev, wallet.id, { hasViewedBackup: true })
-      return markTask(next, 'save_key')
+      next = markTask(next, 'save_key')
+      return { ...next, shieldPulse: createShieldPulse('backup_done') }
     })
   }, [persist, wallet])
 
@@ -267,6 +353,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       return markTask(next, 'know_address')
     })
   }, [persist, wallet])
+
+  const updateWalletProfile = useCallback(
+    (walletId: string, profile: { nickname: string; note?: string }) => {
+      const nickname = profile.nickname.trim()
+      if (!nickname) return
+      const note = (profile.note ?? '').trim().slice(0, 200)
+      persist((prev) =>
+        updateWallet(prev, walletId, { nickname, note: note || undefined }),
+      )
+    },
+    [persist],
+  )
 
   const runDemoSign = useCallback(async () => {
     const current = loadState()
@@ -293,15 +391,25 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [persist])
 
   const sendTransfer = useCallback(
-    async (params: { tokenId: string; to: string; amount: string }) => {
+    async (params: { assetKey: string; to: string; amount: string }) => {
       const current = loadState()
       const active = getActiveWallet(current)
       if (!active) throw new Error('请先创建钱包')
-      const token = getTokenById(params.tokenId)
+      const resolved = getTokenByAssetKey(params.assetKey)
+      const poisonWarn = findSimilarAddressWarning(params.to, [
+        active.address,
+        ...current.addressBook.map((e) => e.address),
+      ])
+      if (poisonWarn) {
+        persist((prev) => ({
+          ...prev,
+          shieldPulse: createShieldPulse('similar_address'),
+        }))
+      }
       if (
         !(await confirmSensitiveAction(
           'send_transfer',
-          `代币：${token?.symbol ?? params.tokenId}\n数量：${params.amount}\n收款：${params.to}`,
+          `链：${resolved?.chain.shortName ?? ''}\n代币：${resolved?.token.symbol ?? params.assetKey}\n数量：${params.amount}\n收款：${params.to}${poisonWarn ? `\n\n⚠ ${poisonWarn}` : ''}`,
         ))
       ) {
         cancelSensitiveAction()
@@ -310,7 +418,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         keystoreJson: active.keystoreJson,
         walletPassword: active.walletPassword,
         from: active.address as Address,
-        tokenId: params.tokenId,
+        assetKey: params.assetKey,
         to: params.to,
         amount: params.amount,
       })
@@ -320,7 +428,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           walletId: active.id,
           walletNickname: active.nickname,
           type: 'transfer',
-          title: `转账 ${token?.symbol ?? params.tokenId}`,
+          title: `转账 ${resolved?.token.symbol ?? params.assetKey}`,
           summary: `${params.amount} → ${params.to.slice(0, 8)}…`,
           hash,
           explorerUrl,
@@ -464,7 +572,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       )
       if (allCorrect) {
         persist((prev) =>
-          markTask({ ...prev, quizPassed: true }, 'shield_quiz'),
+          markTask({ ...prev, quizPassed: true }, 'security_passport'),
         )
       }
       return allCorrect
@@ -492,8 +600,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const navigatorText = useMemo(() => {
     if (!wallet) return getNavigatorMessage('welcome').text
     if (!wallet.hasViewedBackup) return getNavigatorMessage('backup').text
-    if (!state.completedTasks.includes('first_sign'))
+    if (!state.completedTasks.includes('first_sign')) {
       return getNavigatorMessage('sign_intro').text
+    }
+    if (!state.completedTasks.includes('danger_approve')) {
+      return getNavigatorMessage('challenge_approve').text
+    }
+    if (!state.completedTasks.includes('fake_airdrop')) {
+      return getNavigatorMessage('challenge_airdrop').text
+    }
+    if (!state.completedTasks.includes('address_poison')) {
+      return getNavigatorMessage('challenge_poison').text
+    }
     if (!state.quizPassed) return getNavigatorMessage('quiz_intro').text
     return getNavigatorMessage('passport').text
   }, [wallet, state.completedTasks, state.quizPassed])
@@ -514,7 +632,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     removeWallet,
     markBackupViewed,
     markAddressCopied,
+    updateWalletProfile,
     refreshBalances,
+    setWalletChainEnabled,
     runDemoSign,
     sendTransfer,
     sendSwap,
@@ -523,6 +643,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     removeAddressBookEntry,
     setShowLearningHints,
     submitQuiz,
+    emitShieldPulse,
+    warnScreenshotAttempt,
+    checkTransferRecipient,
     resetDemo,
     manifesto,
   }

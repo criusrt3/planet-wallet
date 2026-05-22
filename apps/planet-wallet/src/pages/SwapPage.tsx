@@ -205,7 +205,7 @@ export function SwapPage() {
 
       {lastTxHash && (
         <a
-          href={explorerTxUrl(lastTxHash)}
+          href={explorerTxUrl('sepolia', lastTxHash)}
           target="_blank"
           rel="noreferrer"
           className="flex items-center justify-center gap-1 text-xs text-primary hover:underline"

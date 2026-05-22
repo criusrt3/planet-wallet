@@ -54,6 +54,11 @@ export function WalletSwitcher() {
                   </Badge>
                 ) : null}
               </span>
+              {w.note ? (
+                <span className="text-[10px] text-muted-foreground line-clamp-1">
+                  {w.note}
+                </span>
+              ) : null}
               <span className="font-mono text-[10px] text-muted-foreground">
                 {shortenAddress(w.address, 6)}
               </span>

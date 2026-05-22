@@ -1,9 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { BookUser, ExternalLink, Send } from 'lucide-react'
+import { BookUser, ExternalLink, Send, Shield } from 'lucide-react'
 import { OperationLearning } from '@/components/OperationLearning'
+import { ShieldStatusBar } from '@/components/ShieldStatusBar'
+import { SignTranslator } from '@/components/SignTranslator'
+import { analyzeSignRequest } from '@/lib/security'
 import { isUserCancelled } from '@/lib/confirm-action'
-import { explorerTxUrl, getTokenById, SEPOLIA_TOKENS } from '@/lib/chains'
+import {
+  assetKey,
+  explorerTxUrl,
+  getTokenByAssetKey,
+  SEPOLIA_TOKENS,
+} from '@/lib/chains'
 import { useWallet } from '@/store/WalletContext'
 import { shortenAddress } from '@/lib/wallet'
 import { Button } from '@repo/ui/components/button'
@@ -27,12 +35,16 @@ export function TransferPage() {
     addressBook,
     sendTransfer,
     lastTxHash,
+    checkTransferRecipient,
+    shieldPulse,
   } = useWallet()
-  const [tokenId, setTokenId] = useState('eth')
+  const [asset, setAsset] = useState(assetKey('sepolia', 'eth'))
   const [to, setTo] = useState('')
   const [amount, setAmount] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [poisonWarn, setPoisonWarn] = useState<string | null>(null)
+  const txAnalysis = analyzeSignRequest('eth_sendTransaction')
 
   useEffect(() => {
     if (!wallet) navigate('/create')
@@ -40,8 +52,8 @@ export function TransferPage() {
 
   if (!wallet) return null
 
-  const token = getTokenById(tokenId)
-  const balance = balances.find((b) => b.id === tokenId)
+  const resolved = getTokenByAssetKey(asset)
+  const balance = balances.find((b) => b.id === asset)
 
   function pickFromAddressBook(entryId: string) {
     const entry = addressBook.find((e) => e.id === entryId)
@@ -55,7 +67,7 @@ export function TransferPage() {
     setError(null)
     setSending(true)
     try {
-      const hash = await sendTransfer({ tokenId, to: to.trim(), amount })
+      const hash = await sendTransfer({ assetKey: asset, to: to.trim(), amount })
       toast.success('交易已广播到 Sepolia', {
         description: shortenAddress(hash, 8),
       })
@@ -73,6 +85,8 @@ export function TransferPage() {
   return (
     <div className="space-y-4 animate-fade-up">
       <OperationLearning scene="transfer" actionType="eth_sendTransaction" compact />
+      <ShieldStatusBar pulse={shieldPulse} />
+      <SignTranslator analysis={txAnalysis} />
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -105,13 +119,13 @@ export function TransferPage() {
 
           <div className="space-y-2">
             <Label>代币</Label>
-            <Select value={tokenId} onValueChange={setTokenId}>
+            <Select value={asset} onValueChange={setAsset}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {SEPOLIA_TOKENS.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
+                  <SelectItem key={t.id} value={assetKey('sepolia', t.id)}>
                     {t.symbol} · {t.name}
                   </SelectItem>
                 ))}
@@ -130,9 +144,27 @@ export function TransferPage() {
               id="to"
               placeholder="0x..."
               value={to}
-              onChange={(e) => setTo(e.target.value)}
+              onChange={(e) => {
+                setTo(e.target.value)
+                setPoisonWarn(null)
+              }}
+              onBlur={() => {
+                if (to.trim()) setPoisonWarn(checkTransferRecipient(to.trim()))
+              }}
               className="font-mono text-sm"
             />
+            {poisonWarn && (
+              <p className="text-xs text-warning-text">{poisonWarn}</p>
+            )}
+            {to.trim().startsWith('0x') && to.trim().length >= 42 && (
+              <Link
+                to={`/security?address=${encodeURIComponent(to.trim())}`}
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                <Shield className="h-3 w-3" />
+                扫描该地址安全性
+              </Link>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -162,13 +194,13 @@ export function TransferPage() {
         onClick={handleSend}
       >
         <Send className="mr-2 h-4 w-4" />
-        {sending ? '签名并广播中…' : `发送 ${token?.symbol ?? ''}`}
+        {sending ? '签名并广播中…' : `发送 ${resolved?.token.symbol ?? ''}`}
       </Button>
 
       {lastTxHash && (
         <Button variant="outline" className="w-full" asChild>
           <a
-            href={explorerTxUrl(lastTxHash)}
+            href={explorerTxUrl('sepolia', lastTxHash)}
             target="_blank"
             rel="noreferrer"
           >

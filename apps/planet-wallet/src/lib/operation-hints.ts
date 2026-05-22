@@ -17,6 +17,8 @@ const HINTS: Record<OperationScene, string> = {
     '地址本帮你保存常用联系人。仍要在转账前核对完整地址，避免地址尾号碰撞诈骗。',
   address_book_use:
     '从地址本填入地址可以减少手输错误，但请再次确认显示的是完整 0x 地址。',
+  security_scan:
+    '扫描会读取公开链上数据：交易总数、代币转账与近期交互。用于转账前判断对方地址是否可疑，不能替代专业风控。',
 }
 
 export function getOperationHint(scene: OperationScene): string {

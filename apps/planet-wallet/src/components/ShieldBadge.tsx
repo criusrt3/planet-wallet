@@ -19,7 +19,9 @@ export function ShieldBadge({ level }: { level: ShieldLevel }) {
       <CardContent className="flex items-center gap-3 p-4">
         <Shield className={`h-8 w-8 ${info.color}`} />
         <div>
-          <p className={`text-sm font-semibold ${info.color}`}>{info.label}</p>
+          <p className={`text-sm font-semibold ${info.color}`}>
+            Lv.{info.rank} · {info.label}
+          </p>
           <p className="text-xs text-muted-foreground mt-0.5">
             {info.description}
           </p>

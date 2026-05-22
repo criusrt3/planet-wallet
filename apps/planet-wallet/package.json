@@ -12,6 +12,7 @@
   "dependencies": {
     "@consenlabs/tcx-wasm": "^0.9.1",
     "@repo/ui": "workspace:*",
+    "html-to-image": "^1.11.13",
     "lucide-react": "catalog:ui",
     "react": "catalog:react",
     "react-dom": "catalog:react",
