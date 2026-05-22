@@ -59,6 +59,11 @@ export function PlanetHomePage() {
   )
 
   const activeChain = getChainById(activeChainId)
+  const soleEnabledChainId =
+    enabledChainIds.length === 1 ? (enabledChainIds[0] ?? 'sepolia') : null
+  const soleEnabledChain = soleEnabledChainId
+    ? getChainById(soleEnabledChainId)
+    : undefined
 
   useEffect(() => {
     if (!wallet) navigate('/create')
@@ -183,21 +188,21 @@ export function PlanetHomePage() {
                 )
               })}
             </div>
-          ) : enabledChainIds.length === 1 ? (
+          ) : soleEnabledChainId && soleEnabledChain ? (
             <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
               <span
                 className="inline-block size-2.5 rounded-full"
                 style={{
                   background:
-                    getChainById(enabledChainIds[0])?.themeColor ?? 'var(--primary)',
+                    soleEnabledChain.themeColor ?? 'var(--primary)',
                 }}
                 aria-hidden
               />
               <span className="text-xs font-semibold text-muted-foreground">
-                {getChainById(enabledChainIds[0])?.shortName ?? enabledChainIds[0]}
+                {soleEnabledChain.shortName}
               </span>
               <Badge variant="neutral" className="text-[10px] ml-auto">
-                {getChainById(enabledChainIds[0])?.chainId}
+                {soleEnabledChain.chainId}
               </Badge>
             </div>
           ) : null}
