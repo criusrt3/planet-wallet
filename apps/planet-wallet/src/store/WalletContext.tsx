@@ -43,7 +43,7 @@ import {
   saveState,
   STORAGE_KEY,
 } from '@/lib/storage'
-import { applyTheme } from '@/lib/theme'
+import { applyTheme, subscribeSystemTheme } from '@/lib/theme'
 import {
   hashWalletLockPassword,
   validateWalletLockPassword,
@@ -194,7 +194,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const wallet = useMemo(() => getActiveWallet(state), [state])
 
   useEffect(() => {
-    applyTheme(state.settings.theme)
+    const theme = state.settings.theme
+    applyTheme(theme)
+    if (theme !== 'system') return
+    return subscribeSystemTheme(() => applyTheme('system'))
   }, [state.settings.theme])
 
   const persist = useCallback((updater: (prev: AppState) => AppState) => {

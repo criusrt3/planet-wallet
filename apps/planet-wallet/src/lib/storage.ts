@@ -21,7 +21,7 @@ export const defaultState: AppState = {
   addressBook: [],
   txHistory: [],
   settings: {
-    theme: 'default',
+    theme: 'system',
     showLearningHints: true,
     walletLockEnabled: false,
     walletLockHash: null,

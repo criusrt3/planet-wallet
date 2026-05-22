@@ -1,7 +1,7 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { Link } from 'react-router-dom'
 import { BookOpen, LockKeyhole, Palette, Pencil, Settings, User } from 'lucide-react'
-import { THEME_OPTIONS } from '@/lib/theme'
+import { getThemeStatusLabel, THEME_OPTIONS } from '@/lib/theme'
 import { OperationLearning } from '@/components/OperationLearning'
 import { shortenAddress } from '@/lib/wallet'
 import { useWallet } from '@/store/WalletContext'
@@ -206,9 +206,9 @@ export function SettingsPage() {
       <Accordion type="multiple" className="space-y-4">
         <SettingsAccordionSection value="theme" icon={Palette} title="外观主题">
           <p className="app-meta">
-            当前为「{THEME_OPTIONS.find((o) => o.id === settings.theme)?.label ?? '默认'}」。主题保存在本机，切换后立即生效。
+            当前为「{getThemeStatusLabel(settings.theme)}」。主题保存在本机，跟随系统时会随系统深浅色自动更新。
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="theme-options-grid">
             {THEME_OPTIONS.map((opt) => {
               const active = settings.theme === opt.id
               return (
