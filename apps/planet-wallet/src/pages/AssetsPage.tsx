@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Layers, Plus } from 'lucide-react'
 import { OperationLearning } from '@/components/OperationLearning'
+import { useRequireWallet } from '@/hooks/use-require-wallet'
 import { SUPPORTED_CHAINS } from '@/lib/chains'
 import { useWallet } from '@/store/WalletContext'
 import { Badge } from '@repo/ui/components/badge'
@@ -11,14 +11,10 @@ import { Switch } from '@repo/ui/components/switch'
 import { toast } from '@repo/ui/components/toast'
 
 export function AssetsPage() {
-  const navigate = useNavigate()
-  const { wallet, setWalletChainEnabled, refreshBalances } = useWallet()
+  const { wallet, missing } = useRequireWallet()
+  const { setWalletChainEnabled, refreshBalances } = useWallet()
 
-  useEffect(() => {
-    if (!wallet) navigate('/create')
-  }, [wallet, navigate])
-
-  if (!wallet) return null
+  if (missing || !wallet) return null
 
   function toggleChain(chainId: string, checked: boolean) {
     setWalletChainEnabled(chainId, checked)

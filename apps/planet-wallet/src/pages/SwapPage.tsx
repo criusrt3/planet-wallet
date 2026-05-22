@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ArrowDownUp, ExternalLink, Info, RefreshCw } from 'lucide-react'
 import { OperationLearning } from '@/components/OperationLearning'
+import { useRequireWallet } from '@/hooks/use-require-wallet'
 import { isUserCancelled } from '@/lib/confirm-action'
 import { explorerTxUrl, getTokenById, SEPOLIA_TOKENS } from '@/lib/chains'
 import { useWallet } from '@/store/WalletContext'
@@ -20,9 +21,8 @@ import { Alert, AlertDescription } from '@repo/ui/components/alert'
 import { toast } from '@repo/ui/components/toast'
 
 export function SwapPage() {
-  const navigate = useNavigate()
+  const { wallet, missing } = useRequireWallet()
   const {
-    wallet,
     balances,
     balancesLoading,
     refreshBalances,
@@ -36,11 +36,7 @@ export function SwapPage() {
   const [error, setError] = useState<string | null>(null)
   const [step, setStep] = useState<'idle' | 'approve' | 'swap'>('idle')
 
-  useEffect(() => {
-    if (!wallet) navigate('/create')
-  }, [wallet, navigate])
-
-  if (!wallet) return null
+  if (missing || !wallet) return null
 
   const from = balances.find((b) => b.id === fromId)
   const toToken = getTokenById(toId)

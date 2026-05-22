@@ -8,6 +8,7 @@ import {
 import { TaskBackupSheet } from '@/components/task-sheets/TaskBackupSheet'
 import { TaskAddressSheet } from '@/components/task-sheets/TaskAddressSheet'
 import { TASK_META } from '@/lib/storage'
+import { promptCreateWallet } from '@/lib/wallet-guard'
 import { revealMnemonic } from '@/lib/wallet'
 import { useWallet } from '@/store/WalletContext'
 import type { TaskId } from '@/types'
@@ -51,7 +52,7 @@ export function TaskExperiencePage() {
       return
     }
     if (taskId !== 'light_planet' && !wallet) {
-      navigate('/create')
+      promptCreateWallet(navigate)
       return
     }
     setSheetOpen(true)

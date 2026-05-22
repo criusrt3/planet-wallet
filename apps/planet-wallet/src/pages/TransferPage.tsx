@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { BookUser, ExternalLink, Send, Shield } from 'lucide-react'
 import { OperationLearning } from '@/components/OperationLearning'
+import { useRequireWallet } from '@/hooks/use-require-wallet'
 import { ShieldStatusBar } from '@/components/ShieldStatusBar'
 import { isUserCancelled } from '@/lib/confirm-action'
 import {
@@ -26,9 +27,8 @@ import {
 import { toast } from '@repo/ui/components/toast'
 
 export function TransferPage() {
-  const navigate = useNavigate()
+  const { wallet, missing } = useRequireWallet()
   const {
-    wallet,
     balances,
     addressBook,
     sendTransfer,
@@ -43,11 +43,7 @@ export function TransferPage() {
   const [error, setError] = useState<string | null>(null)
   const [poisonWarn, setPoisonWarn] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!wallet) navigate('/create')
-  }, [wallet, navigate])
-
-  if (!wallet) return null
+  if (missing || !wallet) return null
 
   const resolved = getTokenByAssetKey(asset)
   const balance = balances.find((b) => b.id === asset)

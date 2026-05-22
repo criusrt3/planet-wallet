@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
   Copy,
   ExternalLink,
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { PlanetVisualization } from '@/components/PlanetVisualization'
 import { WalletPageLockScreen } from '@/components/WalletPageLockScreen'
+import { useRequireWallet } from '@/hooks/use-require-wallet'
 import {
   explorerAddressUrl,
   FAUCET_LINKS,
@@ -38,9 +39,8 @@ function TokenAvatar({ symbol, color }: { symbol: string; color: string }) {
 
 
 export function PlanetHomePage() {
-  const navigate = useNavigate()
+  const { wallet, missing } = useRequireWallet()
   const {
-    wallet,
     balances,
     balancesLoading,
     refreshBalances,
@@ -66,10 +66,6 @@ export function PlanetHomePage() {
     : undefined
 
   useEffect(() => {
-    if (!wallet) navigate('/create')
-  }, [wallet, navigate])
-
-  useEffect(() => {
     if (!enabledChainIds.includes(activeChainId)) {
       setActiveChainId(enabledChainIds[0] ?? 'sepolia')
     }
@@ -82,7 +78,7 @@ export function PlanetHomePage() {
     }
   }, [settings.walletLockEnabled, lockWalletPage])
 
-  if (!wallet) return null
+  if (missing || !wallet) return null
 
   if (settings.walletLockEnabled && !isWalletPageUnlocked) {
     return <WalletPageLockScreen />

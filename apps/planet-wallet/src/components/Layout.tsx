@@ -1,6 +1,7 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Globe, Home, Send, Settings, Shield } from 'lucide-react'
 import { WalletSwitcher } from '@/components/WalletSwitcher'
+import { promptCreateWallet } from '@/lib/wallet-guard'
 import { useWallet } from '@/store/WalletContext'
 import { Badge } from '@repo/ui/components/badge'
 
@@ -14,6 +15,7 @@ const NAV = [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const { wallets } = useWallet()
   const hasWallet = wallets.length > 0
 
@@ -48,13 +50,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
             const active = pathname === to
             if (disabled) {
               return (
-                <span
+                <button
                   key={to}
-                  className="app-nav-link flex flex-col items-center gap-1 text-muted-foreground/35"
+                  type="button"
+                  className="app-nav-link app-nav-link--disabled flex flex-col items-center gap-1 text-muted-foreground/50"
+                  aria-label={`${tabLabel}（需先创建钱包）`}
+                  onClick={() => promptCreateWallet(navigate)}
                 >
                   <Icon className="h-[1.35rem] w-[1.35rem] stroke-[1.65]" />
                   <span className="app-nav-label">{tabLabel}</span>
-                </span>
+                </button>
               )
             }
             return (

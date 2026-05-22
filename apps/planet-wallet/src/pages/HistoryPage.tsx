@@ -1,5 +1,4 @@
-import { useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
   ArrowDownUp,
   CheckCircle2,
@@ -10,6 +9,7 @@ import {
   Shield,
   Trash2,
 } from 'lucide-react'
+import { useRequireWallet } from '@/hooks/use-require-wallet'
 import { shortenAddress } from '@/lib/wallet'
 import { useWallet } from '@/store/WalletContext'
 import type { TxHistoryType } from '@/types'
@@ -34,14 +34,10 @@ const TYPE_ICON: Record<TxHistoryType, typeof Send> = {
 }
 
 export function HistoryPage() {
-  const navigate = useNavigate()
-  const { wallet, txHistory, clearTxHistory } = useWallet()
+  const { wallet, missing } = useRequireWallet()
+  const { txHistory, clearTxHistory } = useWallet()
 
-  useEffect(() => {
-    if (!wallet) navigate('/create')
-  }, [wallet, navigate])
-
-  if (!wallet) return null
+  if (missing || !wallet) return null
 
   const myHistory = txHistory.filter((h) => h.walletId === wallet.id)
 

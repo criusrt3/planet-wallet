@@ -520,6 +520,17 @@ html:not(.dark) .app-shell [data-slot="chat-bubble"] {
   color: color-mix(in srgb, var(--foreground) 80%, var(--muted-foreground));
 }
 
+.app-nav-link--disabled {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.app-nav-link--disabled:hover {
+  color: color-mix(in srgb, var(--foreground) 65%, var(--muted-foreground));
+  background: color-mix(in srgb, var(--muted) 40%, transparent);
+}
+
 .app-nav-label {
   font-size: 0.6875rem;
   font-weight: 500;
